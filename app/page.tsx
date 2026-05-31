@@ -120,23 +120,38 @@ export default function Dashboard() {
 
             {/* Monthly Trend */}
             <section className="mb-8 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h2 className="text-sm font-bold text-slate-700 mb-6">Revenue Trend</h2>
-              <div className="flex items-end gap-3 h-32">
-                {data.months.map(m => {
-                  const max = Math.max(...data.months.map(x => data.revenueProduced[x] ?? 0), 1);
-                  const h = Math.round(((data.revenueProduced[m] ?? 0) / max) * 100);
-                  return (
-                    <div key={m} className="flex-1 flex flex-col items-center gap-1">
-                      <span className="text-xs text-slate-400">{fmtCurrency(data.revenueProduced[m] ?? 0)}</span>
-                      <div
-                        className={`w-full rounded-t-md transition-all ${m === month ? 'bg-blue-600' : 'bg-blue-200'}`}
-                        style={{ height: `${h}%`, minHeight: 4 }}
-                      />
-                      <span className="text-xs font-medium text-slate-500">{m}</span>
+              <h2 className="text-sm font-bold text-slate-700 mb-4">Revenue Trend</h2>
+              {(() => {
+                const BAR_MAX_PX = 120;
+                const maxVal = Math.max(...data.months.map(x => data.revenueProduced[x] ?? 0), 1);
+                return (
+                  <>
+                    <div className="flex items-end gap-4" style={{ height: BAR_MAX_PX + 24 }}>
+                      {data.months.map(m => {
+                        const barH = Math.max(Math.round(((data.revenueProduced[m] ?? 0) / maxVal) * BAR_MAX_PX), 4);
+                        return (
+                          <div key={m} className="flex-1 flex flex-col items-center justify-end">
+                            <span className="text-xs text-slate-400 mb-1 text-center leading-tight">
+                              {fmtCurrency(data.revenueProduced[m] ?? 0)}
+                            </span>
+                            <div
+                              className={`w-full rounded-t-md transition-all ${m === month ? 'bg-blue-600' : 'bg-blue-200'}`}
+                              style={{ height: barH }}
+                            />
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="flex gap-4 mt-2">
+                      {data.months.map(m => (
+                        <div key={m} className="flex-1 text-center">
+                          <span className="text-xs font-medium text-slate-500">{m}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
             </section>
 
             {/* Salesperson Table */}
