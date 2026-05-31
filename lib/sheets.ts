@@ -11,11 +11,16 @@ function getAuth() {
 async function readTab(tab: string): Promise<string[][]> {
   const auth = getAuth();
   const sheets = google.sheets({ version: 'v4', auth });
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: process.env.SPREADSHEET_ID!,
-    range: `${tab}!A1:Z10000`,
-  });
-  return (res.data.values || []) as string[][];
+  try {
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.SPREADSHEET_ID!,
+      range: `${tab}!A1:Z10000`,
+    });
+    return (res.data.values || []) as string[][];
+  } catch {
+    // Tab doesn't exist yet — sync hasn't run
+    return [];
+  }
 }
 
 function parseRows<T>(rows: string[][]): T[] {
