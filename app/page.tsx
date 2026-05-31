@@ -4,159 +4,145 @@ import { useEffect, useState } from 'react';
 import KpiCard from '@/components/KpiCard';
 import SalespersonTable from '@/components/SalespersonTable';
 
-const PERIODS = [
-  { label: 'This Month', value: 'this_month' },
-  { label: 'Last Month', value: 'last_month' },
-  { label: 'This Year', value: 'this_year' },
-  { label: 'Last Year', value: 'last_year' },
-];
-
-function getPeriodDates(period: string): { from: string; to: string } {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = now.getMonth();
-
-  if (period === 'this_month') {
-    return {
-      from: new Date(y, m, 1).toISOString().slice(0, 10),
-      to: new Date(y, m + 1, 0).toISOString().slice(0, 10),
-    };
-  }
-  if (period === 'last_month') {
-    return {
-      from: new Date(y, m - 1, 1).toISOString().slice(0, 10),
-      to: new Date(y, m, 0).toISOString().slice(0, 10),
-    };
-  }
-  if (period === 'this_year') {
-    return { from: `${y}-01-01`, to: `${y}-12-31` };
-  }
-  if (period === 'last_year') {
-    return { from: `${y - 1}-01-01`, to: `${y - 1}-12-31` };
-  }
-  return { from: `${y}-01-01`, to: new Date().toISOString().slice(0, 10) };
+interface DashboardData {
+  months: string[];
+  revenueProduced: Record<string, number>;
+  cashCollected: Record<string, number>;
+  newLeads: Record<string, number>;
+  newRequests: Record<string, number>;
+  quotesSent: { total: Record<string, number>; byPerson: Record<string, Record<string, number>> };
+  quotesConverted: { total: Record<string, number>; byPerson: Record<string, Record<string, number>> };
+  conversionRate: { total: Record<string, number>; byPerson: Record<string, Record<string, number>> };
+  convertedDollars: { total: Record<string, number>; byPerson: Record<string, Record<string, number>> };
+  avgSale: { total: Record<string, number>; byPerson: Record<string, Record<string, number>> };
 }
 
-interface KpiData {
-  newLeads: number;
-  newRequests: number;
-  quotesSent: number;
-  quotesConverted: number;
-  conversionRate: number;
-  convertedDollars: number;
-  avgSale: number;
-  bySalesperson: {
-    name: string;
-    sent: number;
-    converted: number;
-    conversionRate: number;
-    convertedDollars: number;
-    avgSale: number;
-  }[];
-}
-
-const fmt = (n: number) =>
+const fmtCurrency = (n: number) =>
   new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(n);
 
+const fmtNum = (n: number) => new Intl.NumberFormat('en-CA').format(n);
+
 export default function Dashboard() {
-  const [period, setPeriod] = useState('this_month');
-  const [data, setData] = useState<KpiData | null>(null);
+  const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [lastUpdated, setLastUpdated] = useState('');
+  const [month, setMonth] = useState('');
 
   useEffect(() => {
-    const { from, to } = getPeriodDates(period);
-    setLoading(true);
-    setError('');
-    fetch(`/api/kpis?from=${from}&to=${to}`)
+    fetch('/api/kpis')
       .then(r => r.json())
       .then(d => {
         if (d.error) throw new Error(d.error);
         setData(d);
-        setLastUpdated(new Date().toLocaleTimeString());
+        if (d.months?.length) setMonth(d.months[d.months.length - 1]);
       })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
-  }, [period]);
+  }, []);
+
+  const salespeople = ['Ross', 'Matt', 'Cody', 'Office'];
+
+  const tableRows = data ? salespeople.map(sp => ({
+    name: sp,
+    sent: data.quotesSent.byPerson[sp]?.[month] ?? 0,
+    converted: data.quotesConverted.byPerson[sp]?.[month] ?? 0,
+    conversionRate: data.conversionRate.byPerson[sp]?.[month] ?? 0,
+    convertedDollars: data.convertedDollars.byPerson[sp]?.[month] ?? 0,
+    avgSale: data.avgSale.byPerson[sp]?.[month] ?? 0,
+  })) : [];
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
       <header className="bg-white border-b border-slate-200 px-8 py-5 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-800">Pacific Heat Pumps</h1>
           <p className="text-xs text-slate-400 mt-0.5">Sales & Marketing Dashboard</p>
         </div>
-        <div className="flex items-center gap-3">
-          {lastUpdated && (
-            <span className="text-xs text-slate-400">Updated {lastUpdated}</span>
-          )}
+        {data?.months?.length ? (
           <div className="flex rounded-lg border border-slate-200 overflow-hidden">
-            {PERIODS.map(p => (
+            {data.months.map(m => (
               <button
-                key={p.value}
-                onClick={() => setPeriod(p.value)}
-                className={`px-4 py-2 text-xs font-medium transition-colors ${
-                  period === p.value
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-slate-600 hover:bg-slate-50'
+                key={m}
+                onClick={() => setMonth(m)}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  month === m ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
                 }`}
               >
-                {p.label}
+                {m}
               </button>
             ))}
           </div>
-        </div>
+        ) : null}
       </header>
 
       <main className="px-8 py-8 max-w-7xl mx-auto">
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
-            {error}
-          </div>
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">{error}</div>
         )}
 
         {loading ? (
           <div className="flex items-center justify-center h-64 text-slate-400">Loading…</div>
-        ) : data ? (
+        ) : data && month ? (
           <>
-            {/* Row 1 — Lead & Request KPIs */}
+            {/* Revenue & Cash */}
             <section className="mb-8">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Marketing</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <KpiCard label="New Leads" value={String(data.newLeads)} />
-                <KpiCard label="New Requests" value={String(data.newRequests)} />
-                <KpiCard label="Quotes Sent" value={String(data.quotesSent)} />
-                <KpiCard label="Quotes Converted" value={String(data.quotesConverted)} />
+              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Finance</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <KpiCard label="Revenue Produced" value={fmtCurrency(data.revenueProduced[month] ?? 0)} color="green" />
+                <KpiCard label="Cash Collected" value={fmtCurrency(data.cashCollected[month] ?? 0)} color="green" />
               </div>
             </section>
 
-            {/* Row 2 — Sales KPIs */}
+            {/* Marketing */}
+            <section className="mb-8">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Marketing</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <KpiCard label="New Leads" value={fmtNum(data.newLeads[month] ?? 0)} />
+                <KpiCard label="New Requests" value={fmtNum(data.newRequests[month] ?? 0)} />
+                <KpiCard label="Quotes Sent" value={fmtNum(data.quotesSent.total[month] ?? 0)} />
+                <KpiCard label="Quotes Converted" value={fmtNum(data.quotesConverted.total[month] ?? 0)} />
+              </div>
+            </section>
+
+            {/* Sales */}
             <section className="mb-8">
               <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Sales</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <KpiCard
                   label="Quote Conversion Rate"
-                  value={`${data.conversionRate}%`}
-                  color={data.conversionRate >= 34 ? 'green' : data.conversionRate >= 20 ? 'yellow' : 'red'}
+                  value={`${(data.conversionRate.total[month] ?? 0).toFixed(1)}%`}
+                  color={(data.conversionRate.total[month] ?? 0) >= 34 ? 'green' : (data.conversionRate.total[month] ?? 0) >= 20 ? 'yellow' : 'red'}
                 />
-                <KpiCard
-                  label="Quotes Converted $"
-                  value={fmt(data.convertedDollars)}
-                  color="green"
-                />
-                <KpiCard
-                  label="Average Sale Value"
-                  value={fmt(data.avgSale)}
-                />
+                <KpiCard label="Quotes Converted $" value={fmtCurrency(data.convertedDollars.total[month] ?? 0)} color="green" />
+                <KpiCard label="Average Sale Value" value={fmtCurrency(data.avgSale.total[month] ?? 0)} />
               </div>
             </section>
 
-            {/* Salesperson Breakdown */}
+            {/* Monthly Trend */}
+            <section className="mb-8 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h2 className="text-sm font-bold text-slate-700 mb-6">Revenue Trend</h2>
+              <div className="flex items-end gap-3 h-32">
+                {data.months.map(m => {
+                  const max = Math.max(...data.months.map(x => data.revenueProduced[x] ?? 0), 1);
+                  const h = Math.round(((data.revenueProduced[m] ?? 0) / max) * 100);
+                  return (
+                    <div key={m} className="flex-1 flex flex-col items-center gap-1">
+                      <span className="text-xs text-slate-400">{fmtCurrency(data.revenueProduced[m] ?? 0)}</span>
+                      <div
+                        className={`w-full rounded-t-md transition-all ${m === month ? 'bg-blue-600' : 'bg-blue-200'}`}
+                        style={{ height: `${h}%`, minHeight: 4 }}
+                      />
+                      <span className="text-xs font-medium text-slate-500">{m}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* Salesperson Table */}
             <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <h2 className="text-sm font-bold text-slate-700 mb-4">By Salesperson</h2>
-              <SalespersonTable rows={data.bySalesperson} />
+              <h2 className="text-sm font-bold text-slate-700 mb-4">By Salesperson — {month}</h2>
+              <SalespersonTable rows={tableRows} />
             </section>
           </>
         ) : null}

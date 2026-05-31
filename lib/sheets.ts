@@ -8,62 +8,146 @@ function getAuth() {
   });
 }
 
-async function readTab(tab: string): Promise<string[][]> {
+export async function getSheetRows(): Promise<string[][]> {
   const auth = getAuth();
   const sheets = google.sheets({ version: 'v4', auth });
   try {
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.SPREADSHEET_ID!,
-      range: `${tab}!A1:Z10000`,
+      range: 'Sheet1!A1:AJ200',
     });
     return (res.data.values || []) as string[][];
   } catch {
-    // Tab doesn't exist yet — sync hasn't run
     return [];
   }
 }
 
-function parseRows<T>(rows: string[][]): T[] {
-  if (rows.length < 2) return [];
-  const headers = rows[0];
-  return rows.slice(1).map(row => {
-    const obj: Record<string, string> = {};
-    headers.forEach((h, i) => { obj[h] = row[i] || ''; });
-    return obj as T;
+function parseNum(val: string | undefined): number {
+  if (!val) return 0;
+  const n = parseFloat(val.replace(/[$,%\s]/g, '').replace(/,/g, ''));
+  return isNaN(n) ? 0 : n;
+}
+
+// Find column indices for monthly totals from the header row
+function findMonthCols(headerRow: string[]): Record<string, number> {
+  const patterns: [string, RegExp][] = [
+    ['Jan', /total\s*jan/i],
+    ['Feb', /total\s*feb/i],
+    ['Mar', /total\s*mar/i],
+    ['Apr', /total\s*apr/i],
+    ['May', /total\s*may/i],
+    ['Jun', /total\s*jun/i],
+  ];
+  const cols: Record<string, number> = {};
+  headerRow.forEach((cell, i) => {
+    for (const [key, pattern] of patterns) {
+      if (pattern.test(cell)) cols[key] = i;
+    }
   });
+  return cols;
 }
 
-export interface RawQuote {
-  id: string;
-  quoteNumber: string;
-  status: string;
-  createdAt: string;
-  total: string;
-  clientName: string;
-  salesperson: string;
+function findRow(rows: string[][], name: string): string[] | undefined {
+  return rows.find(r => (r[0] || '').toLowerCase().includes(name.toLowerCase()));
 }
 
-export interface RawRequest {
-  id: string;
-  createdAt: string;
-  clientName: string;
+function extractMonths(row: string[] | undefined, monthCols: Record<string, number>): Record<string, number> {
+  if (!row) return {};
+  const result: Record<string, number> = {};
+  for (const [month, col] of Object.entries(monthCols)) {
+    result[month] = parseNum(row[col]);
+  }
+  return result;
 }
 
-export interface RawClient {
-  id: string;
-  firstName: string;
-  lastName: string;
-  createdAt: string;
+export interface DashboardData {
+  months: string[];
+  revenueProduced: Record<string, number>;
+  cashCollected: Record<string, number>;
+  newLeads: Record<string, number>;
+  newRequests: Record<string, number>;
+  quotesSent: {
+    total: Record<string, number>;
+    byPerson: Record<string, Record<string, number>>;
+  };
+  quotesConverted: {
+    total: Record<string, number>;
+    byPerson: Record<string, Record<string, number>>;
+  };
+  conversionRate: {
+    total: Record<string, number>;
+    byPerson: Record<string, Record<string, number>>;
+  };
+  convertedDollars: {
+    total: Record<string, number>;
+    byPerson: Record<string, Record<string, number>>;
+  };
+  avgSale: {
+    total: Record<string, number>;
+    byPerson: Record<string, Record<string, number>>;
+  };
 }
 
-export async function getQuotes(): Promise<RawQuote[]> {
-  return parseRows<RawQuote>(await readTab('raw_quotes'));
+export async function getDashboardData(): Promise<DashboardData> {
+  const rows = await getSheetRows();
+  if (rows.length < 2) return emptyData();
+
+  // Header row is row index 1 (second row)
+  const headerRow = rows[1] || [];
+  const monthCols = findMonthCols(headerRow);
+  const months = Object.keys(monthCols);
+
+  const salespeople = ['Ross', 'Matt', 'Cody', 'Office'];
+
+  function byPerson(prefix: string) {
+    const result: Record<string, Record<string, number>> = {};
+    for (const sp of salespeople) {
+      const row = findRow(rows, `${prefix} ${sp}`);
+      result[sp] = extractMonths(row, monthCols);
+    }
+    return result;
+  }
+
+  return {
+    months,
+    revenueProduced: extractMonths(findRow(rows, 'Revenue Produced'), monthCols),
+    cashCollected: extractMonths(findRow(rows, 'Cash Collected'), monthCols),
+    newLeads: extractMonths(findRow(rows, 'New leads'), monthCols),
+    newRequests: extractMonths(findRow(rows, 'New Requests'), monthCols),
+    quotesSent: {
+      total: extractMonths(findRow(rows, 'Total Quotes Sent'), monthCols),
+      byPerson: byPerson('Quotes Sent'),
+    },
+    quotesConverted: {
+      total: extractMonths(findRow(rows, 'Total Quotes Converted'), monthCols),
+      byPerson: byPerson('Quotes Converted'),
+    },
+    conversionRate: {
+      total: extractMonths(findRow(rows, 'Total Quote Conversion Rate'), monthCols),
+      byPerson: {
+        Ross: extractMonths(findRow(rows, 'Quote Conversion Rate Ross'), monthCols),
+        Matt: extractMonths(findRow(rows, 'Quote Conversion Rate Matt'), monthCols),
+        Cody: extractMonths(findRow(rows, 'Quote Conversion Rate Cody'), monthCols),
+        Office: extractMonths(findRow(rows, 'Quote Conversion Rate Office'), monthCols),
+      },
+    },
+    convertedDollars: {
+      total: extractMonths(findRow(rows, 'Total Quotes Converted Dollars'), monthCols),
+      byPerson: byPerson('Quotes Converted Dollars'),
+    },
+    avgSale: {
+      total: extractMonths(findRow(rows, 'Average Sale Total'), monthCols),
+      byPerson: byPerson('Average Sale'),
+    },
+  };
 }
 
-export async function getRequests(): Promise<RawRequest[]> {
-  return parseRows<RawRequest>(await readTab('raw_requests'));
-}
-
-export async function getClients(): Promise<RawClient[]> {
-  return parseRows<RawClient>(await readTab('raw_clients'));
+function emptyData(): DashboardData {
+  const empty = { total: {}, byPerson: {} };
+  return {
+    months: [],
+    revenueProduced: {}, cashCollected: {}, newLeads: {}, newRequests: {},
+    quotesSent: empty, quotesConverted: empty, conversionRate: empty,
+    convertedDollars: empty, avgSale: empty,
+  };
 }
