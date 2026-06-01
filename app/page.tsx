@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import KpiCard from '@/components/KpiCard';
 import SalespersonTable from '@/components/SalespersonTable';
+import { supabase } from '@/lib/supabase';
 
 interface DashboardData {
   months: string[];
@@ -28,7 +29,7 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const [month, setMonth] = useState('');
 
-  useEffect(() => {
+  const loadKpis = () => {
     fetch('/api/kpis')
       .then(r => r.json())
       .then(d => {
@@ -38,6 +39,20 @@ export default function Dashboard() {
       })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadKpis();
+
+    // Realtime — auto-refresh when n8n writes a new snapshot
+    const channel = supabase
+      .channel('kpi_snapshots')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'kpi_snapshots' }, () => {
+        loadKpis();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   const salespeople = ['Ross', 'Matt', 'Cody', 'Office'];
