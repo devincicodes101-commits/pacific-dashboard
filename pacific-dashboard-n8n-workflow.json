@@ -110,7 +110,7 @@
         "headerParameters": { "parameters": [ { "name": "X-JOBBER-GRAPHQL-VERSION", "value": "2025-04-16" } ] },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ query: \"query GetClients($cursor: String) { clients(first: 100, after: $cursor) { nodes { id firstName lastName createdAt } pageInfo { endCursor hasNextPage } } }\", variables: { cursor: $json.cursor || null } }) }}",
+        "jsonBody": "={{ JSON.stringify({ query: \"query GetClients($cursor: String, $filter: ClientFilterAttributes) { clients(first: 100, after: $cursor, filter: $filter) { nodes { id firstName lastName createdAt } pageInfo { endCursor hasNextPage } } }\", variables: { cursor: $json.cursor || null, filter: { createdAt: { after: $now.format('yyyy') + \"-01-01T00:00:00Z\" } } } }) }}",
         "options": {}
       },
       "id": "clients-page",

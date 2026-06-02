@@ -179,9 +179,9 @@ export default function Dashboard() {
             </div>
 
             <p className="text-center text-xs text-slate-300 mt-8">
-              {data._source === 'supabase'
+              {data._source === 'jobber'
                 ? `Synced from Jobber + QuickBooks${data._syncedAt ? ` · ${new Date(data._syncedAt).toLocaleString()}` : ''}`
-                : 'Source: KPI sheet (awaiting live sync)'}
+                : 'Awaiting first sync from Jobber…'}
             </p>
           </>
         ) : null}
