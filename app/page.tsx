@@ -38,6 +38,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [month, setMonth] = useState('');
+  const [live, setLive] = useState(false);
 
   const loadKpis = () => {
     fetch('/api/kpis')
@@ -53,12 +54,22 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadKpis();
-    if (!supabase) return;
-    const channel = supabase
-      .channel('kpi_snapshots')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'kpi_snapshots' }, () => loadKpis())
-      .subscribe();
-    return () => { supabase?.removeChannel(channel); };
+
+    // Polling fallback — keeps data fresh even if realtime isn't configured.
+    const poll = setInterval(loadKpis, 60000);
+
+    let channel: ReturnType<NonNullable<typeof supabase>['channel']> | undefined;
+    if (supabase) {
+      channel = supabase
+        .channel('kpi_snapshots')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'kpi_snapshots' }, () => loadKpis())
+        .subscribe((status) => setLive(status === 'SUBSCRIBED'));
+    }
+
+    return () => {
+      clearInterval(poll);
+      if (channel) supabase?.removeChannel(channel);
+    };
   }, []);
 
   const salespeople = ['Ross', 'Matt', 'Cody', 'Office'];
@@ -100,8 +111,8 @@ export default function Dashboard() {
 
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Live
+              <span className={`w-2 h-2 rounded-full ${live ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+              {live ? 'Live' : 'Auto-refresh'}
             </div>
             {data?.months?.length ? (
               <div className="flex rounded-xl border border-slate-200 overflow-hidden bg-white">
