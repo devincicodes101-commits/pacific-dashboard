@@ -53,11 +53,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadKpis();
+    if (!supabase) return;
     const channel = supabase
       .channel('kpi_snapshots')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'kpi_snapshots' }, () => loadKpis())
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { supabase?.removeChannel(channel); };
   }, []);
 
   const salespeople = ['Ross', 'Matt', 'Cody', 'Office'];

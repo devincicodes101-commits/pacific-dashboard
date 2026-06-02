@@ -1,11 +1,13 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const SERVICE = process.env.SUPABASE_SERVICE_KEY!;
+const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SERVICE = process.env.SUPABASE_SERVICE_KEY;
 
-// Client-side (used for Realtime subscriptions)
-export const supabase = createClient(URL, ANON);
+// Client-side (Realtime). Guarded so a missing public env var never blanks the page.
+export const supabase: SupabaseClient | null =
+  URL && ANON ? createClient(URL, ANON) : null;
 
-// Server-side (used for writing data)
-export const supabaseAdmin = createClient(URL, SERVICE);
+// Server-side (writes/reads in API routes).
+export const supabaseAdmin: SupabaseClient | null =
+  URL && SERVICE ? createClient(URL, SERVICE) : null;

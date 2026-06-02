@@ -8,6 +8,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  if (!supabaseAdmin) {
+    return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
+  }
+
   const data = await req.json();
   const { error } = await supabaseAdmin.from('kpi_snapshots').insert({ data });
 
