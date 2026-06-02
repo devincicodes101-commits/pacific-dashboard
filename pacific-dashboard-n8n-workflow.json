@@ -3,18 +3,15 @@
   "nodes": [
     {
       "parameters": {
-        "rule": {
-          "interval": [
-            { "field": "hours", "hoursInterval": 1 }
-          ]
-        }
+        "rule": { "interval": [ { "field": "hours", "hoursInterval": 1 } ] }
       },
       "id": "schedule-trigger",
       "name": "Schedule Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [0, 400]
+      "position": [-200, 400]
     },
+
     {
       "parameters": {
         "method": "POST",
@@ -22,41 +19,43 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            { "name": "X-JOBBER-GRAPHQL-VERSION", "value": "2025-04-16" }
-          ]
-        },
+        "headerParameters": { "parameters": [ { "name": "X-JOBBER-GRAPHQL-VERSION", "value": "2025-04-16" } ] },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "{\n  \"query\": \"query GetQuotes($cursor: String) { quotes(first: 100, after: $cursor) { nodes { id quoteNumber quoteStatus createdAt amounts { total } client { name } salesperson { id name { full } } } pageInfo { endCursor hasNextPage } } }\",\n  \"variables\": { \"cursor\": null }\n}",
-        "options": {
-          "pagination": {
-            "pagination": {
-              "parameters": {
-                "parameters": [
-                  {
-                    "type": "body",
-                    "name": "variables.cursor",
-                    "value": "={{ $response.body.data.quotes.pageInfo.endCursor }}"
-                  }
-                ]
-              },
-              "paginationCompleteWhen": "other",
-              "completeExpression": "={{ $response.body.data.quotes.pageInfo.hasNextPage === false }}",
-              "limitPagesFetched": true,
-              "maxRequests": 50,
-              "requestInterval": 300
-            }
-          }
-        }
+        "jsonBody": "={{ JSON.stringify({ query: \"query GetQuotes($cursor: String) { quotes(first: 100, after: $cursor) { nodes { id quoteNumber quoteStatus createdAt amounts { total } client { name } salesperson { id name { full } } } pageInfo { endCursor hasNextPage } } }\", variables: { cursor: $json.cursor || null } }) }}",
+        "options": {}
       },
-      "id": "jobber-quotes",
-      "name": "Jobber Quotes",
+      "id": "quotes-page",
+      "name": "Quotes Page",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [320, 100]
+      "position": [60, 120]
     },
+    {
+      "parameters": {
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst resp = $input.first().json;\nconst conn = (resp && resp.data && resp.data.quotes) ? resp.data.quotes : null;\nif (!sd.qStarted) { sd.qAll = []; sd.qStarted = true; sd.qPages = 0; }\nif (conn) {\n  sd.qAll = sd.qAll.concat(conn.nodes || []);\n  sd.qPages = (sd.qPages || 0) + 1;\n  const pi = conn.pageInfo || {};\n  if (pi.hasNextPage && pi.endCursor && sd.qPages < 100) {\n    return [{ done: false, cursor: pi.endCursor }];\n  }\n}\nsd.qStarted = false;\nreturn [{ done: true, count: (sd.qAll || []).length }];"
+      },
+      "id": "quotes-collect",
+      "name": "Quotes Collect",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [280, 120]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "loose" },
+          "conditions": [ { "leftValue": "={{ $json.done }}", "rightValue": "", "operator": { "type": "boolean", "operation": "true", "singleValue": true } } ],
+          "combinator": "and"
+        }
+      },
+      "id": "quotes-more",
+      "name": "Quotes More?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [500, 120]
+    },
+
     {
       "parameters": {
         "method": "POST",
@@ -64,41 +63,43 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            { "name": "X-JOBBER-GRAPHQL-VERSION", "value": "2025-04-16" }
-          ]
-        },
+        "headerParameters": { "parameters": [ { "name": "X-JOBBER-GRAPHQL-VERSION", "value": "2025-04-16" } ] },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "{\n  \"query\": \"query GetRequests($cursor: String) { requests(first: 100, after: $cursor) { nodes { id createdAt client { name } } pageInfo { endCursor hasNextPage } } }\",\n  \"variables\": { \"cursor\": null }\n}",
-        "options": {
-          "pagination": {
-            "pagination": {
-              "parameters": {
-                "parameters": [
-                  {
-                    "type": "body",
-                    "name": "variables.cursor",
-                    "value": "={{ $response.body.data.requests.pageInfo.endCursor }}"
-                  }
-                ]
-              },
-              "paginationCompleteWhen": "other",
-              "completeExpression": "={{ $response.body.data.requests.pageInfo.hasNextPage === false }}",
-              "limitPagesFetched": true,
-              "maxRequests": 50,
-              "requestInterval": 300
-            }
-          }
-        }
+        "jsonBody": "={{ JSON.stringify({ query: \"query GetRequests($cursor: String) { requests(first: 100, after: $cursor) { nodes { id createdAt client { name } } pageInfo { endCursor hasNextPage } } }\", variables: { cursor: $json.cursor || null } }) }}",
+        "options": {}
       },
-      "id": "jobber-requests",
-      "name": "Jobber Requests",
+      "id": "requests-page",
+      "name": "Requests Page",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [320, 280]
+      "position": [60, 400]
     },
+    {
+      "parameters": {
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst resp = $input.first().json;\nconst conn = (resp && resp.data && resp.data.requests) ? resp.data.requests : null;\nif (!sd.rStarted) { sd.rAll = []; sd.rStarted = true; sd.rPages = 0; }\nif (conn) {\n  sd.rAll = sd.rAll.concat(conn.nodes || []);\n  sd.rPages = (sd.rPages || 0) + 1;\n  const pi = conn.pageInfo || {};\n  if (pi.hasNextPage && pi.endCursor && sd.rPages < 100) {\n    return [{ done: false, cursor: pi.endCursor }];\n  }\n}\nsd.rStarted = false;\nreturn [{ done: true, count: (sd.rAll || []).length }];"
+      },
+      "id": "requests-collect",
+      "name": "Requests Collect",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [280, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "loose" },
+          "conditions": [ { "leftValue": "={{ $json.done }}", "rightValue": "", "operator": { "type": "boolean", "operation": "true", "singleValue": true } } ],
+          "combinator": "and"
+        }
+      },
+      "id": "requests-more",
+      "name": "Requests More?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [500, 400]
+    },
+
     {
       "parameters": {
         "method": "POST",
@@ -106,41 +107,43 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            { "name": "X-JOBBER-GRAPHQL-VERSION", "value": "2025-04-16" }
-          ]
-        },
+        "headerParameters": { "parameters": [ { "name": "X-JOBBER-GRAPHQL-VERSION", "value": "2025-04-16" } ] },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "{\n  \"query\": \"query GetClients($cursor: String) { clients(first: 100, after: $cursor) { nodes { id firstName lastName createdAt } pageInfo { endCursor hasNextPage } } }\",\n  \"variables\": { \"cursor\": null }\n}",
-        "options": {
-          "pagination": {
-            "pagination": {
-              "parameters": {
-                "parameters": [
-                  {
-                    "type": "body",
-                    "name": "variables.cursor",
-                    "value": "={{ $response.body.data.clients.pageInfo.endCursor }}"
-                  }
-                ]
-              },
-              "paginationCompleteWhen": "other",
-              "completeExpression": "={{ $response.body.data.clients.pageInfo.hasNextPage === false }}",
-              "limitPagesFetched": true,
-              "maxRequests": 50,
-              "requestInterval": 300
-            }
-          }
-        }
+        "jsonBody": "={{ JSON.stringify({ query: \"query GetClients($cursor: String) { clients(first: 100, after: $cursor) { nodes { id firstName lastName createdAt } pageInfo { endCursor hasNextPage } } }\", variables: { cursor: $json.cursor || null } }) }}",
+        "options": {}
       },
-      "id": "jobber-clients",
-      "name": "Jobber Clients",
+      "id": "clients-page",
+      "name": "Clients Page",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [320, 460]
+      "position": [60, 680]
     },
+    {
+      "parameters": {
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst resp = $input.first().json;\nconst conn = (resp && resp.data && resp.data.clients) ? resp.data.clients : null;\nif (!sd.cStarted) { sd.cAll = []; sd.cStarted = true; sd.cPages = 0; }\nif (conn) {\n  sd.cAll = sd.cAll.concat(conn.nodes || []);\n  sd.cPages = (sd.cPages || 0) + 1;\n  const pi = conn.pageInfo || {};\n  if (pi.hasNextPage && pi.endCursor && sd.cPages < 100) {\n    return [{ done: false, cursor: pi.endCursor }];\n  }\n}\nsd.cStarted = false;\nreturn [{ done: true, count: (sd.cAll || []).length }];"
+      },
+      "id": "clients-collect",
+      "name": "Clients Collect",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [280, 680]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "loose" },
+          "conditions": [ { "leftValue": "={{ $json.done }}", "rightValue": "", "operator": { "type": "boolean", "operation": "true", "singleValue": true } } ],
+          "combinator": "and"
+        }
+      },
+      "id": "clients-more",
+      "name": "Clients More?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [500, 680]
+    },
+
     {
       "parameters": {
         "method": "GET",
@@ -148,47 +151,22 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            { "name": "Accept", "value": "application/json" }
-          ]
-        },
+        "headerParameters": { "parameters": [ { "name": "Accept", "value": "application/json" } ] },
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            {
-              "name": "query",
-              "value": "=SELECT * FROM Invoice WHERE TxnDate >= '{{ $now.format('yyyy') }}-01-01' AND TxnDate <= '{{ $now.format('yyyy') }}-12-31' STARTPOSITION 1 MAXRESULTS 100"
-            },
+            { "name": "query", "value": "=SELECT * FROM Invoice WHERE TxnDate >= '{{ $now.format('yyyy') }}-01-01' AND TxnDate <= '{{ $now.format('yyyy') }}-12-31' MAXRESULTS 1000" },
             { "name": "minorversion", "value": "75" }
           ]
         },
-        "options": {
-          "pagination": {
-            "pagination": {
-              "parameters": {
-                "parameters": [
-                  {
-                    "type": "qs",
-                    "name": "query",
-                    "value": "=SELECT * FROM Invoice WHERE TxnDate >= '{{ $now.format('yyyy') }}-01-01' AND TxnDate <= '{{ $now.format('yyyy') }}-12-31' STARTPOSITION {{ ($response.body.QueryResponse.startPosition || 1) + ($response.body.QueryResponse.maxResults || 100) }} MAXRESULTS 100"
-                  }
-                ]
-              },
-              "paginationCompleteWhen": "other",
-              "completeExpression": "={{ ($response.body.QueryResponse.Invoice || []).length < 100 }}",
-              "limitPagesFetched": true,
-              "maxRequests": 50,
-              "requestInterval": 300
-            }
-          }
-        }
+        "options": {}
       },
       "id": "qb-invoices",
       "name": "QB Invoices",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [320, 640]
+      "position": [60, 940],
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -197,79 +175,50 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            { "name": "Accept", "value": "application/json" }
-          ]
-        },
+        "headerParameters": { "parameters": [ { "name": "Accept", "value": "application/json" } ] },
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            {
-              "name": "query",
-              "value": "=SELECT * FROM Payment WHERE TxnDate >= '{{ $now.format('yyyy') }}-01-01' AND TxnDate <= '{{ $now.format('yyyy') }}-12-31' STARTPOSITION 1 MAXRESULTS 100"
-            },
+            { "name": "query", "value": "=SELECT * FROM Payment WHERE TxnDate >= '{{ $now.format('yyyy') }}-01-01' AND TxnDate <= '{{ $now.format('yyyy') }}-12-31' MAXRESULTS 1000" },
             { "name": "minorversion", "value": "75" }
           ]
         },
-        "options": {
-          "pagination": {
-            "pagination": {
-              "parameters": {
-                "parameters": [
-                  {
-                    "type": "qs",
-                    "name": "query",
-                    "value": "=SELECT * FROM Payment WHERE TxnDate >= '{{ $now.format('yyyy') }}-01-01' AND TxnDate <= '{{ $now.format('yyyy') }}-12-31' STARTPOSITION {{ ($response.body.QueryResponse.startPosition || 1) + ($response.body.QueryResponse.maxResults || 100) }} MAXRESULTS 100"
-                  }
-                ]
-              },
-              "paginationCompleteWhen": "other",
-              "completeExpression": "={{ ($response.body.QueryResponse.Payment || []).length < 100 }}",
-              "limitPagesFetched": true,
-              "maxRequests": 50,
-              "requestInterval": 300
-            }
-          }
-        }
+        "options": {}
       },
       "id": "qb-payments",
       "name": "QB Payments",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [320, 820]
+      "position": [60, 1120],
+      "onError": "continueRegularOutput"
     },
+
     {
-      "parameters": {
-        "numberInputs": 5
-      },
+      "parameters": { "numberInputs": 5 },
       "id": "merge-all",
       "name": "Merge All",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.1,
-      "position": [700, 400]
+      "position": [760, 600]
     },
+
     {
       "parameters": {
-        "jsCode": "// ============================================================\n// Process all source data into the dashboard structure.\n// Reads each source node by name so it does not depend on\n// merge ordering.\n// ============================================================\n\n// ── Gather raw records from each HTTP node (flatten pages) ──\nfunction flattenJobber(nodeName, key) {\n  let out = [];\n  try {\n    for (const item of $(nodeName).all()) {\n      const nodes = item.json?.data?.[key]?.nodes || [];\n      out = out.concat(nodes);\n    }\n  } catch (e) { return []; }\n  return out;\n}\n\nfunction flattenQB(nodeName, entity) {\n  let out = [];\n  try {\n    for (const item of $(nodeName).all()) {\n      const rows = item.json?.QueryResponse?.[entity] || [];\n      out = out.concat(rows);\n    }\n  } catch (e) { return []; }\n  return out;\n}\n\n// Dedupe by id — guards against pagination refetching the same page.\nfunction dedupe(arr, idKey) {\n  const seen = new Set();\n  const out = [];\n  for (const x of arr) {\n    const k = x?.[idKey];\n    if (k == null) { out.push(x); continue; }\n    if (seen.has(k)) continue;\n    seen.add(k);\n    out.push(x);\n  }\n  return out;\n}\n\nconst quotes = dedupe(flattenJobber('Jobber Quotes', 'quotes'), 'id');\nconst requests = dedupe(flattenJobber('Jobber Requests', 'requests'), 'id');\nconst clients = dedupe(flattenJobber('Jobber Clients', 'clients'), 'id');\nconst qbInvoices = dedupe(flattenQB('QB Invoices', 'Invoice'), 'Id');\nconst qbPayments = dedupe(flattenQB('QB Payments', 'Payment'), 'Id');\n\n// ── Time context ──\nconst now = new Date();\nconst year = now.getFullYear();\nconst MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];\nconst months = MONTH_NAMES.slice(0, now.getMonth() + 1);\n\nfunction monthOf(dateStr) {\n  if (!dateStr) return null;\n  const d = new Date(dateStr);\n  if (isNaN(d.getTime())) return null;\n  if (d.getFullYear() !== year) return null;\n  return MONTH_NAMES[d.getMonth()];\n}\n\nfunction emptyMonths() {\n  const o = {};\n  months.forEach(m => { o[m] = 0; });\n  return o;\n}\nfunction emptyByPerson() {\n  return { Ross: emptyMonths(), Matt: emptyMonths(), Cody: emptyMonths(), Office: emptyMonths() };\n}\n\n// ── Salesperson assignment (placeholder — refine to match data) ──\nfunction assignPerson(quote) {\n  const sp = (quote.salesperson?.name?.full || '').toLowerCase();\n  if (sp.includes('ross')) return 'Ross';\n  if (sp.includes('matt')) return 'Matt';\n  if (sp.includes('cody')) return 'Cody';\n  return 'Office';\n}\n\n// ── Revenue Produced (QB invoices) ──\nconst revenueProduced = emptyMonths();\nfor (const inv of qbInvoices) {\n  const mo = monthOf(inv.TxnDate);\n  if (mo && months.includes(mo)) revenueProduced[mo] += parseFloat(inv.TotalAmt) || 0;\n}\n\n// ── Cash Collected (QB payments) ──\nconst cashCollected = emptyMonths();\nfor (const p of qbPayments) {\n  const mo = monthOf(p.TxnDate);\n  if (mo && months.includes(mo)) cashCollected[mo] += parseFloat(p.TotalAmt) || 0;\n}\n\n// ── New Leads (clients) ──\nconst newLeads = emptyMonths();\nfor (const c of clients) {\n  const mo = monthOf(c.createdAt);\n  if (mo && months.includes(mo)) newLeads[mo] += 1;\n}\n\n// ── New Requests ──\nconst newRequests = emptyMonths();\nfor (const r of requests) {\n  const mo = monthOf(r.createdAt);\n  if (mo && months.includes(mo)) newRequests[mo] += 1;\n}\n\n// ── Quotes sent / converted / dollars ──\nconst quotesSentTotal = emptyMonths();\nconst quotesSentByPerson = emptyByPerson();\nconst quotesConvertedTotal = emptyMonths();\nconst quotesConvertedByPerson = emptyByPerson();\nconst convertedDollarsTotal = emptyMonths();\nconst convertedDollarsByPerson = emptyByPerson();\n\nconst SENT = new Set(['AWAITING_RESPONSE','CHANGES_REQUESTED','APPROVED','CONVERTED','ARCHIVED']);\n\nfor (const q of quotes) {\n  const mo = monthOf(q.createdAt);\n  if (!mo || !months.includes(mo)) continue;\n  const status = (q.quoteStatus || '').toUpperCase();\n  const person = assignPerson(q);\n  const amount = parseFloat(q.amounts?.total) || 0;\n\n  if (SENT.has(status)) {\n    quotesSentTotal[mo] += 1;\n    quotesSentByPerson[person][mo] += 1;\n  }\n  if (status === 'CONVERTED') {\n    quotesConvertedTotal[mo] += 1;\n    quotesConvertedByPerson[person][mo] += 1;\n    convertedDollarsTotal[mo] += amount;\n    convertedDollarsByPerson[person][mo] += amount;\n  }\n}\n\n// ── Rounding ──\nfunction round2(map) { for (const k of Object.keys(map)) map[k] = Math.round(map[k] * 100) / 100; return map; }\nround2(revenueProduced); round2(cashCollected); round2(convertedDollarsTotal);\nfor (const p of Object.keys(convertedDollarsByPerson)) round2(convertedDollarsByPerson[p]);\n\n// ── Conversion rate ──\nfunction rate(conv, sent) {\n  const o = {};\n  for (const m of months) o[m] = (sent[m] || 0) > 0 ? Math.round((conv[m] / sent[m]) * 1000) / 10 : 0;\n  return o;\n}\nconst conversionRateTotal = rate(quotesConvertedTotal, quotesSentTotal);\nconst conversionRateByPerson = {};\nfor (const p of Object.keys(quotesSentByPerson)) conversionRateByPerson[p] = rate(quotesConvertedByPerson[p], quotesSentByPerson[p]);\n\n// ── Average sale ──\nfunction avg(dollars, conv) {\n  const o = {};\n  for (const m of months) o[m] = (conv[m] || 0) > 0 ? Math.round((dollars[m] / conv[m]) * 100) / 100 : 0;\n  return o;\n}\nconst avgSaleTotal = avg(convertedDollarsTotal, quotesConvertedTotal);\nconst avgSaleByPerson = {};\nfor (const p of Object.keys(quotesSentByPerson)) avgSaleByPerson[p] = avg(convertedDollarsByPerson[p], quotesConvertedByPerson[p]);\n\nreturn [{\n  months,\n  revenueProduced,\n  cashCollected,\n  newLeads,\n  newRequests,\n  quotesSent: { total: quotesSentTotal, byPerson: quotesSentByPerson },\n  quotesConverted: { total: quotesConvertedTotal, byPerson: quotesConvertedByPerson },\n  conversionRate: { total: conversionRateTotal, byPerson: conversionRateByPerson },\n  convertedDollars: { total: convertedDollarsTotal, byPerson: convertedDollarsByPerson },\n  avgSale: { total: avgSaleTotal, byPerson: avgSaleByPerson },\n  _debug: { quotes: quotes.length, requests: requests.length, clients: clients.length, invoices: qbInvoices.length, payments: qbPayments.length }\n}];"
+        "jsCode": "// ============================================================\n// Build the dashboard payload. Jobber records come from the\n// pagination loops (workflow static data). QB comes from the\n// QB nodes (may be empty until production keys are connected).\n// ============================================================\nconst sd = $getWorkflowStaticData('global');\n\nfunction dedupe(arr, idKey) {\n  const seen = new Set();\n  const out = [];\n  for (const x of (arr || [])) {\n    const k = x && x[idKey];\n    if (k == null) { out.push(x); continue; }\n    if (seen.has(k)) continue;\n    seen.add(k); out.push(x);\n  }\n  return out;\n}\n\nfunction flattenQB(nodeName, entity) {\n  let out = [];\n  try {\n    for (const item of $(nodeName).all()) {\n      const rows = item.json && item.json.QueryResponse && item.json.QueryResponse[entity] || [];\n      out = out.concat(rows);\n    }\n  } catch (e) { return []; }\n  return out;\n}\n\nconst quotes = dedupe(sd.qAll || [], 'id');\nconst requests = dedupe(sd.rAll || [], 'id');\nconst clients = dedupe(sd.cAll || [], 'id');\nconst qbInvoices = dedupe(flattenQB('QB Invoices', 'Invoice'), 'Id');\nconst qbPayments = dedupe(flattenQB('QB Payments', 'Payment'), 'Id');\n\nconst now = new Date();\nconst year = now.getFullYear();\nconst MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];\nconst months = MONTH_NAMES.slice(0, now.getMonth() + 1);\n\nfunction monthOf(dateStr) {\n  if (!dateStr) return null;\n  const d = new Date(dateStr);\n  if (isNaN(d.getTime())) return null;\n  if (d.getFullYear() !== year) return null;\n  return MONTH_NAMES[d.getMonth()];\n}\nfunction emptyMonths() { const o = {}; months.forEach(m => { o[m] = 0; }); return o; }\nfunction emptyByPerson() { return { Ross: emptyMonths(), Matt: emptyMonths(), Cody: emptyMonths(), Office: emptyMonths() }; }\n\nfunction assignPerson(quote) {\n  const sp = ((quote.salesperson && quote.salesperson.name && quote.salesperson.name.full) || '').toLowerCase();\n  if (sp.includes('ross')) return 'Ross';\n  if (sp.includes('matt')) return 'Matt';\n  if (sp.includes('cody')) return 'Cody';\n  return 'Office';\n}\n\nconst revenueProduced = emptyMonths();\nfor (const inv of qbInvoices) { const mo = monthOf(inv.TxnDate); if (mo && months.includes(mo)) revenueProduced[mo] += parseFloat(inv.TotalAmt) || 0; }\n\nconst cashCollected = emptyMonths();\nfor (const p of qbPayments) { const mo = monthOf(p.TxnDate); if (mo && months.includes(mo)) cashCollected[mo] += parseFloat(p.TotalAmt) || 0; }\n\nconst newLeads = emptyMonths();\nfor (const c of clients) { const mo = monthOf(c.createdAt); if (mo && months.includes(mo)) newLeads[mo] += 1; }\n\nconst newRequests = emptyMonths();\nfor (const r of requests) { const mo = monthOf(r.createdAt); if (mo && months.includes(mo)) newRequests[mo] += 1; }\n\nconst quotesSentTotal = emptyMonths();\nconst quotesSentByPerson = emptyByPerson();\nconst quotesConvertedTotal = emptyMonths();\nconst quotesConvertedByPerson = emptyByPerson();\nconst convertedDollarsTotal = emptyMonths();\nconst convertedDollarsByPerson = emptyByPerson();\nconst SENT = new Set(['AWAITING_RESPONSE','CHANGES_REQUESTED','APPROVED','CONVERTED','ARCHIVED']);\n\nfor (const q of quotes) {\n  const mo = monthOf(q.createdAt);\n  if (!mo || !months.includes(mo)) continue;\n  const status = (q.quoteStatus || '').toUpperCase();\n  const person = assignPerson(q);\n  const amount = parseFloat(q.amounts && q.amounts.total) || 0;\n  if (SENT.has(status)) { quotesSentTotal[mo] += 1; quotesSentByPerson[person][mo] += 1; }\n  if (status === 'CONVERTED') {\n    quotesConvertedTotal[mo] += 1;\n    quotesConvertedByPerson[person][mo] += 1;\n    convertedDollarsTotal[mo] += amount;\n    convertedDollarsByPerson[person][mo] += amount;\n  }\n}\n\nfunction round2(map) { for (const k of Object.keys(map)) map[k] = Math.round(map[k] * 100) / 100; return map; }\nround2(revenueProduced); round2(cashCollected); round2(convertedDollarsTotal);\nfor (const p of Object.keys(convertedDollarsByPerson)) round2(convertedDollarsByPerson[p]);\n\nfunction rate(conv, sent) { const o = {}; for (const m of months) o[m] = (sent[m] || 0) > 0 ? Math.round((conv[m] / sent[m]) * 1000) / 10 : 0; return o; }\nconst conversionRateTotal = rate(quotesConvertedTotal, quotesSentTotal);\nconst conversionRateByPerson = {};\nfor (const p of Object.keys(quotesSentByPerson)) conversionRateByPerson[p] = rate(quotesConvertedByPerson[p], quotesSentByPerson[p]);\n\nfunction avg(dollars, conv) { const o = {}; for (const m of months) o[m] = (conv[m] || 0) > 0 ? Math.round((dollars[m] / conv[m]) * 100) / 100 : 0; return o; }\nconst avgSaleTotal = avg(convertedDollarsTotal, quotesConvertedTotal);\nconst avgSaleByPerson = {};\nfor (const p of Object.keys(quotesSentByPerson)) avgSaleByPerson[p] = avg(convertedDollarsByPerson[p], quotesConvertedByPerson[p]);\n\nreturn [{\n  months,\n  revenueProduced, cashCollected, newLeads, newRequests,\n  quotesSent: { total: quotesSentTotal, byPerson: quotesSentByPerson },\n  quotesConverted: { total: quotesConvertedTotal, byPerson: quotesConvertedByPerson },\n  conversionRate: { total: conversionRateTotal, byPerson: conversionRateByPerson },\n  convertedDollars: { total: convertedDollarsTotal, byPerson: convertedDollarsByPerson },\n  avgSale: { total: avgSaleTotal, byPerson: avgSaleByPerson },\n  _debug: { quotes: quotes.length, requests: requests.length, clients: clients.length, invoices: qbInvoices.length, payments: qbPayments.length }\n}];"
       },
       "id": "process-data",
       "name": "Process Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [920, 400]
+      "position": [980, 600]
     },
+
     {
       "parameters": {
         "method": "POST",
         "url": "https://pacific-dashboard-omega.vercel.app/api/sync",
         "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            { "name": "x-sync-secret", "value": "pacific_sync_2026" },
-            { "name": "Content-Type", "value": "application/json" }
-          ]
-        },
+        "headerParameters": { "parameters": [ { "name": "x-sync-secret", "value": "pacific_sync_2026" }, { "name": "Content-Type", "value": "application/json" } ] },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json) }}",
@@ -279,46 +228,47 @@
       "name": "POST to Dashboard",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1140, 400]
+      "position": [1200, 600]
     }
   ],
   "connections": {
     "Schedule Trigger": {
-      "main": [
-        [
-          { "node": "Jobber Quotes", "type": "main", "index": 0 },
-          { "node": "Jobber Requests", "type": "main", "index": 0 },
-          { "node": "Jobber Clients", "type": "main", "index": 0 },
-          { "node": "QB Invoices", "type": "main", "index": 0 },
-          { "node": "QB Payments", "type": "main", "index": 0 }
-        ]
-      ]
+      "main": [[
+        { "node": "Quotes Page", "type": "main", "index": 0 },
+        { "node": "Requests Page", "type": "main", "index": 0 },
+        { "node": "Clients Page", "type": "main", "index": 0 },
+        { "node": "QB Invoices", "type": "main", "index": 0 },
+        { "node": "QB Payments", "type": "main", "index": 0 }
+      ]]
     },
-    "Jobber Quotes": {
-      "main": [[{ "node": "Merge All", "type": "main", "index": 0 }]]
-    },
-    "Jobber Requests": {
-      "main": [[{ "node": "Merge All", "type": "main", "index": 1 }]]
-    },
-    "Jobber Clients": {
-      "main": [[{ "node": "Merge All", "type": "main", "index": 2 }]]
-    },
-    "QB Invoices": {
-      "main": [[{ "node": "Merge All", "type": "main", "index": 3 }]]
-    },
-    "QB Payments": {
-      "main": [[{ "node": "Merge All", "type": "main", "index": 4 }]]
-    },
-    "Merge All": {
-      "main": [[{ "node": "Process Data", "type": "main", "index": 0 }]]
-    },
-    "Process Data": {
-      "main": [[{ "node": "POST to Dashboard", "type": "main", "index": 0 }]]
-    }
+
+    "Quotes Page": { "main": [[{ "node": "Quotes Collect", "type": "main", "index": 0 }]] },
+    "Quotes Collect": { "main": [[{ "node": "Quotes More?", "type": "main", "index": 0 }]] },
+    "Quotes More?": { "main": [
+      [{ "node": "Merge All", "type": "main", "index": 0 }],
+      [{ "node": "Quotes Page", "type": "main", "index": 0 }]
+    ] },
+
+    "Requests Page": { "main": [[{ "node": "Requests Collect", "type": "main", "index": 0 }]] },
+    "Requests Collect": { "main": [[{ "node": "Requests More?", "type": "main", "index": 0 }]] },
+    "Requests More?": { "main": [
+      [{ "node": "Merge All", "type": "main", "index": 1 }],
+      [{ "node": "Requests Page", "type": "main", "index": 0 }]
+    ] },
+
+    "Clients Page": { "main": [[{ "node": "Clients Collect", "type": "main", "index": 0 }]] },
+    "Clients Collect": { "main": [[{ "node": "Clients More?", "type": "main", "index": 0 }]] },
+    "Clients More?": { "main": [
+      [{ "node": "Merge All", "type": "main", "index": 2 }],
+      [{ "node": "Clients Page", "type": "main", "index": 0 }]
+    ] },
+
+    "QB Invoices": { "main": [[{ "node": "Merge All", "type": "main", "index": 3 }]] },
+    "QB Payments": { "main": [[{ "node": "Merge All", "type": "main", "index": 4 }]] },
+
+    "Merge All": { "main": [[{ "node": "Process Data", "type": "main", "index": 0 }]] },
+    "Process Data": { "main": [[{ "node": "POST to Dashboard", "type": "main", "index": 0 }]] }
   },
-  "settings": {
-    "executionOrder": "v1",
-    "saveManualExecutions": true
-  },
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
   "tags": [{ "name": "pacific-dashboard" }]
 }
