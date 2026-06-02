@@ -33,7 +33,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst resp = $input.first().json;\nconst conn = (resp && resp.data && resp.data.quotes) ? resp.data.quotes : null;\nif (!sd.qStarted) { sd.qAll = []; sd.qStarted = true; sd.qPages = 0; }\nif (conn) {\n  sd.qAll = sd.qAll.concat(conn.nodes || []);\n  sd.qPages = (sd.qPages || 0) + 1;\n  const pi = conn.pageInfo || {};\n  if (pi.hasNextPage && pi.endCursor && sd.qPages < 100) {\n    return [{ done: false, cursor: pi.endCursor }];\n  }\n}\nsd.qStarted = false;\nreturn [{ done: true, count: (sd.qAll || []).length }];"
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst resp = $input.first().json;\nif (!sd.qStarted) { sd.qAll = []; sd.qStarted = true; sd.qPages = 0; sd.qCursor = null; }\nconst throttled = resp && resp.errors && resp.errors.some(e => e && e.extensions && e.extensions.code === 'THROTTLED');\nif (throttled) { await new Promise(r => setTimeout(r, 2500)); return [{ done: false, cursor: sd.qCursor }]; }\nconst conn = (resp && resp.data && resp.data.quotes) ? resp.data.quotes : null;\nif (conn) {\n  sd.qAll = sd.qAll.concat(conn.nodes || []);\n  sd.qPages = (sd.qPages || 0) + 1;\n  const pi = conn.pageInfo || {};\n  if (pi.hasNextPage && pi.endCursor && sd.qPages < 100) { sd.qCursor = pi.endCursor; return [{ done: false, cursor: pi.endCursor }]; }\n}\nsd.qStarted = false;\nreturn [{ done: true, count: (sd.qAll || []).length }];"
       },
       "id": "quotes-collect",
       "name": "Quotes Collect",
@@ -77,7 +77,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst resp = $input.first().json;\nconst conn = (resp && resp.data && resp.data.requests) ? resp.data.requests : null;\nif (!sd.rStarted) { sd.rAll = []; sd.rStarted = true; sd.rPages = 0; }\nif (conn) {\n  sd.rAll = sd.rAll.concat(conn.nodes || []);\n  sd.rPages = (sd.rPages || 0) + 1;\n  const pi = conn.pageInfo || {};\n  if (pi.hasNextPage && pi.endCursor && sd.rPages < 100) {\n    return [{ done: false, cursor: pi.endCursor }];\n  }\n}\nsd.rStarted = false;\nreturn [{ done: true, count: (sd.rAll || []).length }];"
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst resp = $input.first().json;\nif (!sd.rStarted) { sd.rAll = []; sd.rStarted = true; sd.rPages = 0; sd.rCursor = null; }\nconst throttled = resp && resp.errors && resp.errors.some(e => e && e.extensions && e.extensions.code === 'THROTTLED');\nif (throttled) { await new Promise(r => setTimeout(r, 2500)); return [{ done: false, cursor: sd.rCursor }]; }\nconst conn = (resp && resp.data && resp.data.requests) ? resp.data.requests : null;\nif (conn) {\n  sd.rAll = sd.rAll.concat(conn.nodes || []);\n  sd.rPages = (sd.rPages || 0) + 1;\n  const pi = conn.pageInfo || {};\n  if (pi.hasNextPage && pi.endCursor && sd.rPages < 100) { sd.rCursor = pi.endCursor; return [{ done: false, cursor: pi.endCursor }]; }\n}\nsd.rStarted = false;\nreturn [{ done: true, count: (sd.rAll || []).length }];"
       },
       "id": "requests-collect",
       "name": "Requests Collect",
@@ -121,7 +121,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst resp = $input.first().json;\nconst conn = (resp && resp.data && resp.data.clients) ? resp.data.clients : null;\nif (!sd.cStarted) { sd.cAll = []; sd.cStarted = true; sd.cPages = 0; }\nif (conn) {\n  sd.cAll = sd.cAll.concat(conn.nodes || []);\n  sd.cPages = (sd.cPages || 0) + 1;\n  const pi = conn.pageInfo || {};\n  if (pi.hasNextPage && pi.endCursor && sd.cPages < 100) {\n    return [{ done: false, cursor: pi.endCursor }];\n  }\n}\nsd.cStarted = false;\nreturn [{ done: true, count: (sd.cAll || []).length }];"
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst resp = $input.first().json;\nif (!sd.cStarted) { sd.cAll = []; sd.cStarted = true; sd.cPages = 0; sd.cCursor = null; }\nconst throttled = resp && resp.errors && resp.errors.some(e => e && e.extensions && e.extensions.code === 'THROTTLED');\nif (throttled) { await new Promise(r => setTimeout(r, 2500)); return [{ done: false, cursor: sd.cCursor }]; }\nconst conn = (resp && resp.data && resp.data.clients) ? resp.data.clients : null;\nif (conn) {\n  sd.cAll = sd.cAll.concat(conn.nodes || []);\n  sd.cPages = (sd.cPages || 0) + 1;\n  const pi = conn.pageInfo || {};\n  if (pi.hasNextPage && pi.endCursor && sd.cPages < 100) { sd.cCursor = pi.endCursor; return [{ done: false, cursor: pi.endCursor }]; }\n}\nsd.cStarted = false;\nreturn [{ done: true, count: (sd.cAll || []).length }];"
       },
       "id": "clients-collect",
       "name": "Clients Collect",
