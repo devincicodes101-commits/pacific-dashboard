@@ -3,6 +3,32 @@
 @tailwind utilities;
 
 body {
-  background-color: #f8fafc;
-  color: #0f172a;
+  background: linear-gradient(135deg, #0f1535 0%, #0a0e2a 45%, #060c29 100%);
+  background-attachment: fixed;
+  color: #ffffff;
+  min-height: 100vh;
+}
+
+/* Subtle glow accents in the background */
+body::before {
+  content: '';
+  position: fixed;
+  top: -10%;
+  left: -5%;
+  width: 40vw;
+  height: 40vw;
+  background: radial-gradient(circle, rgba(33, 150, 243, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed;
+  bottom: -10%;
+  right: -5%;
+  width: 40vw;
+  height: 40vw;
+  background: radial-gradient(circle, rgba(117, 81, 255, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
 }

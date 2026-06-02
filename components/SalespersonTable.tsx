@@ -13,10 +13,10 @@ const fmt = (n: number) =>
 const initials = (name: string) => name.slice(0, 2).toUpperCase();
 
 const AVATAR_COLORS: Record<string, string> = {
-  Ross: 'bg-blue-100 text-blue-700',
-  Matt: 'bg-violet-100 text-violet-700',
-  Cody: 'bg-amber-100 text-amber-700',
-  Office: 'bg-slate-100 text-slate-600',
+  Ross: 'from-blue-500 to-cyan-400',
+  Matt: 'from-violet-500 to-purple-400',
+  Cody: 'from-amber-500 to-orange-400',
+  Office: 'from-slate-500 to-slate-400',
 };
 
 export default function SalespersonTable({ rows }: { rows: Row[] }) {
@@ -26,7 +26,7 @@ export default function SalespersonTable({ rows }: { rows: Row[] }) {
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-100">
+          <tr className="border-b border-white/10">
             {['Salesperson', 'Sent', 'Converted', 'Conv. Rate', 'Converted $', 'Avg Sale'].map((h, i) => (
               <th
                 key={h}
@@ -39,24 +39,24 @@ export default function SalespersonTable({ rows }: { rows: Row[] }) {
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.name} className="border-b border-slate-50 hover:bg-slate-50/70 transition-colors">
+            <tr key={r.name} className="border-b border-white/5 hover:bg-white/[0.04] transition-colors">
               <td className="py-3 px-4">
                 <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${AVATAR_COLORS[r.name] || 'bg-slate-100 text-slate-600'}`}>
+                  <div className={`w-8 h-8 rounded-full bg-gradient-to-br flex items-center justify-center text-xs font-bold text-white shadow-md ${AVATAR_COLORS[r.name] || 'from-slate-500 to-slate-400'}`}>
                     {initials(r.name)}
                   </div>
-                  <span className="font-semibold text-slate-700">{r.name}</span>
+                  <span className="font-semibold text-slate-100">{r.name}</span>
                 </div>
               </td>
-              <td className="py-3 px-4 text-right text-slate-600 tabular-nums">{r.sent}</td>
-              <td className="py-3 px-4 text-right text-slate-600 tabular-nums">{r.converted}</td>
+              <td className="py-3 px-4 text-right text-slate-300 tabular-nums">{r.sent}</td>
+              <td className="py-3 px-4 text-right text-slate-300 tabular-nums">{r.converted}</td>
               <td className="py-3 px-4 text-right tabular-nums">
-                <span className={`font-semibold ${r.conversionRate >= 34 ? 'text-emerald-600' : r.conversionRate >= 20 ? 'text-amber-600' : 'text-rose-500'}`}>
+                <span className={`font-semibold ${r.conversionRate >= 34 ? 'text-emerald-400' : r.conversionRate >= 20 ? 'text-amber-400' : 'text-rose-400'}`}>
                   {r.conversionRate.toFixed(1)}%
                 </span>
               </td>
-              <td className="py-3 px-4 text-right text-slate-600 tabular-nums">{fmt(r.convertedDollars)}</td>
-              <td className="py-3 px-4 text-right text-slate-600 tabular-nums">{fmt(r.avgSale)}</td>
+              <td className="py-3 px-4 text-right text-slate-300 tabular-nums">{fmt(r.convertedDollars)}</td>
+              <td className="py-3 px-4 text-right text-slate-300 tabular-nums">{fmt(r.avgSale)}</td>
             </tr>
           ))}
         </tbody>
