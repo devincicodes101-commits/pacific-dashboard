@@ -13,7 +13,8 @@ export default function RadialGauge({ label, centerValue, pct, color, caption }:
   const offset = circumference * (1 - clamped / 100);
 
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl2 bg-surface border border-line shadow-card p-6">
+    <div className="relative overflow-hidden flex flex-col items-center justify-center rounded-xl2 bg-surface border border-line shadow-card transition-shadow hover:shadow-md p-6">
+      <span className="absolute inset-x-0 top-0 h-1" style={{ background: color }} />
       <p className="text-[11px] font-semibold uppercase tracking-widest text-ink-muted mb-5 text-center">{label}</p>
       <div className="relative">
         <svg width="148" height="148" viewBox="0 0 148 148">

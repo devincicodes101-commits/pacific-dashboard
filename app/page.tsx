@@ -93,6 +93,8 @@ export default function Dashboard() {
     ? data.months.map((m) => ({ month: m, revenue: data.revenueProduced[m] ?? 0, converted: data.convertedDollars.total[m] ?? 0 }))
     : [];
 
+  const series = (m: MonthMap) => (data ? data.months.map((mm) => m[mm] ?? 0) : []);
+
   return (
     <div className="flex min-h-screen bg-canvas">
       <Sidebar />
@@ -113,8 +115,8 @@ export default function Dashboard() {
               <section>
                 <SectionLabel>Finance</SectionLabel>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <KpiCard label="Revenue Produced" value={fmtCurrency(v(data.revenueProduced))} rawValue={v(data.revenueProduced)} target={TARGETS.revenueProduced} icon={<IconRevenue />} accent="#4FB286" />
-                  <KpiCard label="Cash Collected" value={fmtCurrency(v(data.cashCollected))} rawValue={v(data.cashCollected)} target={TARGETS.cashCollected} icon={<IconCash />} accent="#5B8DEF" />
+                  <KpiCard label="Revenue Produced" value={fmtCurrency(v(data.revenueProduced))} rawValue={v(data.revenueProduced)} target={TARGETS.revenueProduced} icon={<IconRevenue />} accent="#4FB286" trend={series(data.revenueProduced)} />
+                  <KpiCard label="Cash Collected" value={fmtCurrency(v(data.cashCollected))} rawValue={v(data.cashCollected)} target={TARGETS.cashCollected} icon={<IconCash />} accent="#5B8DEF" trend={series(data.cashCollected)} />
                 </div>
               </section>
 
@@ -122,10 +124,10 @@ export default function Dashboard() {
               <section>
                 <SectionLabel>Marketing</SectionLabel>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-                  <KpiCard label="New Leads" value={fmtNum(v(data.newLeads))} rawValue={v(data.newLeads)} target={TARGETS.newLeads} icon={<IconLeads />} accent="#5B8DEF" />
-                  <KpiCard label="New Requests" value={fmtNum(v(data.newRequests))} rawValue={v(data.newRequests)} target={TARGETS.newRequests} icon={<IconRequests />} accent="#8B7FD6" />
-                  <KpiCard label="Quotes Sent" value={fmtNum(v(data.quotesSent.total))} rawValue={v(data.quotesSent.total)} target={TARGETS.quotesSent} icon={<IconSent />} accent="#F5A623" />
-                  <KpiCard label="Quotes Converted" value={fmtNum(v(data.quotesConverted.total))} rawValue={v(data.quotesConverted.total)} target={TARGETS.quotesConverted} icon={<IconConverted />} accent="#4FB286" />
+                  <KpiCard label="New Leads" value={fmtNum(v(data.newLeads))} rawValue={v(data.newLeads)} target={TARGETS.newLeads} icon={<IconLeads />} accent="#5B8DEF" trend={series(data.newLeads)} />
+                  <KpiCard label="New Requests" value={fmtNum(v(data.newRequests))} rawValue={v(data.newRequests)} target={TARGETS.newRequests} icon={<IconRequests />} accent="#8B7FD6" trend={series(data.newRequests)} />
+                  <KpiCard label="Quotes Sent" value={fmtNum(v(data.quotesSent.total))} rawValue={v(data.quotesSent.total)} target={TARGETS.quotesSent} icon={<IconSent />} accent="#F5A623" trend={series(data.quotesSent.total)} />
+                  <KpiCard label="Quotes Converted" value={fmtNum(v(data.quotesConverted.total))} rawValue={v(data.quotesConverted.total)} target={TARGETS.quotesConverted} icon={<IconConverted />} accent="#4FB286" trend={series(data.quotesConverted.total)} />
                 </div>
               </section>
 
@@ -183,5 +185,10 @@ export default function Dashboard() {
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-[11px] font-semibold uppercase tracking-widest text-ink-muted mb-4">{children}</h2>;
+  return (
+    <div className="flex items-center gap-2 mb-4">
+      <span className="w-1 h-3.5 rounded-full bg-coral" />
+      <h2 className="text-[11px] font-semibold uppercase tracking-widest text-ink-soft">{children}</h2>
+    </div>
+  );
 }

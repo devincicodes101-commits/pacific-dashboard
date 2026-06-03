@@ -9,6 +9,12 @@ const config: Config = {
         canvas: '#F4F6F8',   // page background — soft light gray
         surface: '#FFFFFF',  // cards
         line: '#E8ECF1',     // 1px razor borders
+        // Sidebar — deep navy
+        navy: {
+          DEFAULT: '#141B2D',
+          light: '#1E2740',
+          border: '#2A344F',
+        },
         // Text
         ink: {
           DEFAULT: '#1E293B', // primary slate
