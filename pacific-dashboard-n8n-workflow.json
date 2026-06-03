@@ -146,55 +146,50 @@
 
     {
       "parameters": {
-        "method": "GET",
-        "url": "https://quickbooks.api.intuit.com/v3/company/9130357054630796/query",
+        "method": "POST",
+        "url": "https://api.getjobber.com/api/graphql",
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "sendHeaders": true,
-        "headerParameters": { "parameters": [ { "name": "Accept", "value": "application/json" } ] },
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            { "name": "query", "value": "=SELECT * FROM Invoice WHERE TxnDate >= '{{ $now.format('yyyy') }}-01-01' AND TxnDate <= '{{ $now.format('yyyy') }}-12-31' MAXRESULTS 1000" },
-            { "name": "minorversion", "value": "75" }
-          ]
-        },
+        "headerParameters": { "parameters": [ { "name": "X-JOBBER-GRAPHQL-VERSION", "value": "2025-04-16" } ] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ query: \"query GetInvoices($cursor: String) { invoices(first: 50, after: $cursor) { nodes { id invoiceNumber createdAt amounts { total } paymentRecords { nodes { id amount createdAt } } } pageInfo { endCursor hasNextPage } } }\", variables: { cursor: $json.cursor || null } }) }}",
         "options": {}
       },
-      "id": "qb-invoices",
-      "name": "QB Invoices",
+      "id": "invoices-page",
+      "name": "Invoices Page",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [60, 940],
-      "onError": "continueRegularOutput"
+      "position": [60, 940]
     },
     {
       "parameters": {
-        "method": "GET",
-        "url": "https://quickbooks.api.intuit.com/v3/company/9130357054630796/query",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "oAuth2Api",
-        "sendHeaders": true,
-        "headerParameters": { "parameters": [ { "name": "Accept", "value": "application/json" } ] },
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            { "name": "query", "value": "=SELECT * FROM Payment WHERE TxnDate >= '{{ $now.format('yyyy') }}-01-01' AND TxnDate <= '{{ $now.format('yyyy') }}-12-31' MAXRESULTS 1000" },
-            { "name": "minorversion", "value": "75" }
-          ]
-        },
-        "options": {}
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst resp = $input.first().json;\nif (!sd.iStarted) { sd.iAll = []; sd.iStarted = true; sd.iPages = 0; sd.iCursor = null; }\nconst throttled = resp && resp.errors && resp.errors.some(e => e && e.extensions && e.extensions.code === 'THROTTLED');\nif (throttled) { await new Promise(r => setTimeout(r, 2500)); return [{ done: false, cursor: sd.iCursor }]; }\nconst conn = (resp && resp.data && resp.data.invoices) ? resp.data.invoices : null;\nif (conn) {\n  sd.iAll = sd.iAll.concat(conn.nodes || []);\n  sd.iPages = (sd.iPages || 0) + 1;\n  const pi = conn.pageInfo || {};\n  if (pi.hasNextPage && pi.endCursor && sd.iPages < 200) { sd.iCursor = pi.endCursor; return [{ done: false, cursor: pi.endCursor }]; }\n}\nsd.iStarted = false;\nreturn [{ done: true, count: (sd.iAll || []).length }];"
       },
-      "id": "qb-payments",
-      "name": "QB Payments",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [60, 1120],
-      "onError": "continueRegularOutput"
+      "id": "invoices-collect",
+      "name": "Invoices Collect",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [280, 940]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "loose" },
+          "conditions": [ { "leftValue": "={{ $json.done }}", "rightValue": "", "operator": { "type": "boolean", "operation": "true", "singleValue": true } } ],
+          "combinator": "and"
+        }
+      },
+      "id": "invoices-more",
+      "name": "Invoices More?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [500, 940]
     },
 
     {
-      "parameters": { "numberInputs": 5 },
+      "parameters": { "numberInputs": 4 },
       "id": "merge-all",
       "name": "Merge All",
       "type": "n8n-nodes-base.merge",
@@ -204,7 +199,7 @@
 
     {
       "parameters": {
-        "jsCode": "// ============================================================\n// Build the dashboard payload. Jobber records come from the\n// pagination loops (workflow static data). QB comes from the\n// QB nodes (may be empty until production keys are connected).\n// ============================================================\nconst sd = $getWorkflowStaticData('global');\n\nfunction dedupe(arr, idKey) {\n  const seen = new Set();\n  const out = [];\n  for (const x of (arr || [])) {\n    const k = x && x[idKey];\n    if (k == null) { out.push(x); continue; }\n    if (seen.has(k)) continue;\n    seen.add(k); out.push(x);\n  }\n  return out;\n}\n\nfunction flattenQB(nodeName, entity) {\n  let out = [];\n  try {\n    for (const item of $(nodeName).all()) {\n      const rows = item.json && item.json.QueryResponse && item.json.QueryResponse[entity] || [];\n      out = out.concat(rows);\n    }\n  } catch (e) { return []; }\n  return out;\n}\n\nconst quotes = dedupe(sd.qAll || [], 'id');\nconst requests = dedupe(sd.rAll || [], 'id');\nconst clients = dedupe(sd.cAll || [], 'id');\nconst qbInvoices = dedupe(flattenQB('QB Invoices', 'Invoice'), 'Id');\nconst qbPayments = dedupe(flattenQB('QB Payments', 'Payment'), 'Id');\n\nconst now = new Date();\nconst year = now.getFullYear();\nconst MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];\nconst months = MONTH_NAMES.slice(0, now.getMonth() + 1);\n\nfunction monthOf(dateStr) {\n  if (!dateStr) return null;\n  const d = new Date(dateStr);\n  if (isNaN(d.getTime())) return null;\n  // Bucket by the company's local time (Victoria BC) to match Jobber's reports.\n  const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Vancouver', year: 'numeric', month: 'numeric' }).formatToParts(d);\n  const y = Number(parts.find(p => p.type === 'year').value);\n  const m = Number(parts.find(p => p.type === 'month').value);\n  if (y !== year) return null;\n  return MONTH_NAMES[m - 1];\n}\nfunction emptyMonths() { const o = {}; months.forEach(m => { o[m] = 0; }); return o; }\n\n// Use each quote's real salesperson name (matches Jobber's Salesperson Performance report person-for-person).\nfunction personOf(quote) {\n  return (quote.salesperson && quote.salesperson.name && quote.salesperson.name.full || '').trim() || 'Unassigned';\n}\nfunction ensurePerson(obj, person) { if (!obj[person]) obj[person] = emptyMonths(); return obj[person]; }\n\nconst revenueProduced = emptyMonths();\nfor (const inv of qbInvoices) { const mo = monthOf(inv.TxnDate); if (mo && months.includes(mo)) revenueProduced[mo] += parseFloat(inv.TotalAmt) || 0; }\n\nconst cashCollected = emptyMonths();\nfor (const p of qbPayments) { const mo = monthOf(p.TxnDate); if (mo && months.includes(mo)) cashCollected[mo] += parseFloat(p.TotalAmt) || 0; }\n\nconst newLeads = emptyMonths();\nfor (const c of clients) { const mo = monthOf(c.createdAt); if (mo && months.includes(mo)) newLeads[mo] += 1; }\n\nconst newRequests = emptyMonths();\nfor (const r of requests) { const mo = monthOf(r.createdAt); if (mo && months.includes(mo)) newRequests[mo] += 1; }\n\nconst quotesSentTotal = emptyMonths();\nconst quotesSentByPerson = {};\nconst quotesConvertedTotal = emptyMonths();\nconst quotesConvertedByPerson = {};\nconst convertedDollarsTotal = emptyMonths();\nconst convertedDollarsByPerson = {};\n\nfor (const q of quotes) {\n  const status = (q.quoteStatus || '').toUpperCase();\n  const person = personOf(q);\n  const amount = parseFloat(q.amounts && q.amounts.total) || 0;\n  // Quotes Sent = \"Sent within\" the month (by sentAt) — matches Jobber's Quotes report (Sent within filter).\n  const sentMo = monthOf(q.sentAt);\n  if (sentMo && months.includes(sentMo)) { quotesSentTotal[sentMo] += 1; ensurePerson(quotesSentByPerson, person)[sentMo] += 1; }\n  // Quotes Converted + $ = \"Converted within\" the month (by transitionedAt) — matches Jobber's Quotes report (Converted within filter).\n  if (status === 'CONVERTED') {\n    const convMo = monthOf(q.transitionedAt);\n    if (convMo && months.includes(convMo)) {\n      quotesConvertedTotal[convMo] += 1;\n      ensurePerson(quotesConvertedByPerson, person)[convMo] += 1;\n      convertedDollarsTotal[convMo] += amount;\n      ensurePerson(convertedDollarsByPerson, person)[convMo] += amount;\n    }\n  }\n}\n\nfunction round2(map) { for (const k of Object.keys(map)) map[k] = Math.round(map[k] * 100) / 100; return map; }\nround2(revenueProduced); round2(cashCollected); round2(convertedDollarsTotal);\n\n// Unify the salesperson set across sent + converted so every rep exists in all maps.\nconst allPersons = Array.from(new Set(Object.keys(quotesSentByPerson).concat(Object.keys(quotesConvertedByPerson))));\nfor (const p of allPersons) { ensurePerson(quotesSentByPerson, p); ensurePerson(quotesConvertedByPerson, p); ensurePerson(convertedDollarsByPerson, p); }\nfor (const p of allPersons) round2(convertedDollarsByPerson[p]);\n\nfunction rate(conv, sent) { const o = {}; for (const m of months) o[m] = (sent[m] || 0) > 0 ? Math.round((conv[m] / sent[m]) * 1000) / 10 : 0; return o; }\n// Conversion rate matches Jobber's Quotes report: Converted-within / Sent-within (cross-cohort).\nconst conversionRateTotal = rate(quotesConvertedTotal, quotesSentTotal);\nconst conversionRateByPerson = {};\nfor (const p of allPersons) conversionRateByPerson[p] = rate(quotesConvertedByPerson[p], quotesSentByPerson[p]);\n\nfunction avg(dollars, conv) { const o = {}; for (const m of months) o[m] = (conv[m] || 0) > 0 ? Math.round((dollars[m] / conv[m]) * 100) / 100 : 0; return o; }\nconst avgSaleTotal = avg(convertedDollarsTotal, quotesConvertedTotal);\nconst avgSaleByPerson = {};\nfor (const p of allPersons) avgSaleByPerson[p] = avg(convertedDollarsByPerson[p], quotesConvertedByPerson[p]);\n\nreturn [{\n  months,\n  revenueProduced, cashCollected, newLeads, newRequests,\n  quotesSent: { total: quotesSentTotal, byPerson: quotesSentByPerson },\n  quotesConverted: { total: quotesConvertedTotal, byPerson: quotesConvertedByPerson },\n  conversionRate: { total: conversionRateTotal, byPerson: conversionRateByPerson },\n  convertedDollars: { total: convertedDollarsTotal, byPerson: convertedDollarsByPerson },\n  avgSale: { total: avgSaleTotal, byPerson: avgSaleByPerson },\n  _debug: { quotes: quotes.length, requests: requests.length, clients: clients.length, invoices: qbInvoices.length, payments: qbPayments.length }\n}];"
+        "jsCode": "// ============================================================\n// Build the dashboard payload. Jobber records come from the\n// pagination loops (workflow static data). QB comes from the\n// QB nodes (may be empty until production keys are connected).\n// ============================================================\nconst sd = $getWorkflowStaticData('global');\n\nfunction dedupe(arr, idKey) {\n  const seen = new Set();\n  const out = [];\n  for (const x of (arr || [])) {\n    const k = x && x[idKey];\n    if (k == null) { out.push(x); continue; }\n    if (seen.has(k)) continue;\n    seen.add(k); out.push(x);\n  }\n  return out;\n}\n\n\nconst quotes = dedupe(sd.qAll || [], 'id');\nconst requests = dedupe(sd.rAll || [], 'id');\nconst clients = dedupe(sd.cAll || [], 'id');\nconst invoices = dedupe(sd.iAll || [], 'id');\n\nconst now = new Date();\nconst year = now.getFullYear();\nconst MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];\nconst months = MONTH_NAMES.slice(0, now.getMonth() + 1);\n\nfunction monthOf(dateStr) {\n  if (!dateStr) return null;\n  const d = new Date(dateStr);\n  if (isNaN(d.getTime())) return null;\n  // Bucket by the company's local time (Victoria BC) to match Jobber's reports.\n  const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Vancouver', year: 'numeric', month: 'numeric' }).formatToParts(d);\n  const y = Number(parts.find(p => p.type === 'year').value);\n  const m = Number(parts.find(p => p.type === 'month').value);\n  if (y !== year) return null;\n  return MONTH_NAMES[m - 1];\n}\nfunction emptyMonths() { const o = {}; months.forEach(m => { o[m] = 0; }); return o; }\n\n// Use each quote's real salesperson name (matches Jobber's Salesperson Performance report person-for-person).\nfunction personOf(quote) {\n  return (quote.salesperson && quote.salesperson.name && quote.salesperson.name.full || '').trim() || 'Unassigned';\n}\nfunction ensurePerson(obj, person) { if (!obj[person]) obj[person] = emptyMonths(); return obj[person]; }\n\n// Revenue Produced = Jobber invoiced value (invoice total, bucketed by invoice date).\nconst revenueProduced = emptyMonths();\nfor (const inv of invoices) { const mo = monthOf(inv.createdAt); if (mo && months.includes(mo)) revenueProduced[mo] += parseFloat(inv.amounts && inv.amounts.total) || 0; }\n\n// Cash Collected = Jobber payments (payment records on each invoice, by payment date).\nlet paymentCount = 0;\nconst cashCollected = emptyMonths();\nfor (const inv of invoices) {\n  const prs = (inv.paymentRecords && inv.paymentRecords.nodes) || [];\n  for (const pr of prs) { paymentCount += 1; const mo = monthOf(pr.createdAt); if (mo && months.includes(mo)) cashCollected[mo] += parseFloat(pr.amount) || 0; }\n}\n\nconst newLeads = emptyMonths();\nfor (const c of clients) { const mo = monthOf(c.createdAt); if (mo && months.includes(mo)) newLeads[mo] += 1; }\n\nconst newRequests = emptyMonths();\nfor (const r of requests) { const mo = monthOf(r.createdAt); if (mo && months.includes(mo)) newRequests[mo] += 1; }\n\nconst quotesSentTotal = emptyMonths();\nconst quotesSentByPerson = {};\nconst quotesConvertedTotal = emptyMonths();\nconst quotesConvertedByPerson = {};\nconst convertedDollarsTotal = emptyMonths();\nconst convertedDollarsByPerson = {};\n\nfor (const q of quotes) {\n  const status = (q.quoteStatus || '').toUpperCase();\n  const person = personOf(q);\n  const amount = parseFloat(q.amounts && q.amounts.total) || 0;\n  // Quotes Sent = \"Sent within\" the month (by sentAt) — matches Jobber's Quotes report (Sent within filter).\n  const sentMo = monthOf(q.sentAt);\n  if (sentMo && months.includes(sentMo)) { quotesSentTotal[sentMo] += 1; ensurePerson(quotesSentByPerson, person)[sentMo] += 1; }\n  // Quotes Converted + $ = \"Converted within\" the month (by transitionedAt) — matches Jobber's Quotes report (Converted within filter).\n  if (status === 'CONVERTED') {\n    const convMo = monthOf(q.transitionedAt);\n    if (convMo && months.includes(convMo)) {\n      quotesConvertedTotal[convMo] += 1;\n      ensurePerson(quotesConvertedByPerson, person)[convMo] += 1;\n      convertedDollarsTotal[convMo] += amount;\n      ensurePerson(convertedDollarsByPerson, person)[convMo] += amount;\n    }\n  }\n}\n\nfunction round2(map) { for (const k of Object.keys(map)) map[k] = Math.round(map[k] * 100) / 100; return map; }\nround2(revenueProduced); round2(cashCollected); round2(convertedDollarsTotal);\n\n// Unify the salesperson set across sent + converted so every rep exists in all maps.\nconst allPersons = Array.from(new Set(Object.keys(quotesSentByPerson).concat(Object.keys(quotesConvertedByPerson))));\nfor (const p of allPersons) { ensurePerson(quotesSentByPerson, p); ensurePerson(quotesConvertedByPerson, p); ensurePerson(convertedDollarsByPerson, p); }\nfor (const p of allPersons) round2(convertedDollarsByPerson[p]);\n\nfunction rate(conv, sent) { const o = {}; for (const m of months) o[m] = (sent[m] || 0) > 0 ? Math.round((conv[m] / sent[m]) * 1000) / 10 : 0; return o; }\n// Conversion rate matches Jobber's Quotes report: Converted-within / Sent-within (cross-cohort).\nconst conversionRateTotal = rate(quotesConvertedTotal, quotesSentTotal);\nconst conversionRateByPerson = {};\nfor (const p of allPersons) conversionRateByPerson[p] = rate(quotesConvertedByPerson[p], quotesSentByPerson[p]);\n\nfunction avg(dollars, conv) { const o = {}; for (const m of months) o[m] = (conv[m] || 0) > 0 ? Math.round((dollars[m] / conv[m]) * 100) / 100 : 0; return o; }\nconst avgSaleTotal = avg(convertedDollarsTotal, quotesConvertedTotal);\nconst avgSaleByPerson = {};\nfor (const p of allPersons) avgSaleByPerson[p] = avg(convertedDollarsByPerson[p], quotesConvertedByPerson[p]);\n\nreturn [{\n  months,\n  revenueProduced, cashCollected, newLeads, newRequests,\n  quotesSent: { total: quotesSentTotal, byPerson: quotesSentByPerson },\n  quotesConverted: { total: quotesConvertedTotal, byPerson: quotesConvertedByPerson },\n  conversionRate: { total: conversionRateTotal, byPerson: conversionRateByPerson },\n  convertedDollars: { total: convertedDollarsTotal, byPerson: convertedDollarsByPerson },\n  avgSale: { total: avgSaleTotal, byPerson: avgSaleByPerson },\n  _debug: { quotes: quotes.length, requests: requests.length, clients: clients.length, invoices: invoices.length, payments: paymentCount }\n}];"
       },
       "id": "process-data",
       "name": "Process Data",
@@ -237,8 +232,7 @@
         { "node": "Quotes Page", "type": "main", "index": 0 },
         { "node": "Requests Page", "type": "main", "index": 0 },
         { "node": "Clients Page", "type": "main", "index": 0 },
-        { "node": "QB Invoices", "type": "main", "index": 0 },
-        { "node": "QB Payments", "type": "main", "index": 0 }
+        { "node": "Invoices Page", "type": "main", "index": 0 }
       ]]
     },
 
@@ -263,8 +257,12 @@
       [{ "node": "Clients Page", "type": "main", "index": 0 }]
     ] },
 
-    "QB Invoices": { "main": [[{ "node": "Merge All", "type": "main", "index": 3 }]] },
-    "QB Payments": { "main": [[{ "node": "Merge All", "type": "main", "index": 4 }]] },
+    "Invoices Page": { "main": [[{ "node": "Invoices Collect", "type": "main", "index": 0 }]] },
+    "Invoices Collect": { "main": [[{ "node": "Invoices More?", "type": "main", "index": 0 }]] },
+    "Invoices More?": { "main": [
+      [{ "node": "Merge All", "type": "main", "index": 3 }],
+      [{ "node": "Invoices Page", "type": "main", "index": 0 }]
+    ] },
 
     "Merge All": { "main": [[{ "node": "Process Data", "type": "main", "index": 0 }]] },
     "Process Data": { "main": [[{ "node": "POST to Dashboard", "type": "main", "index": 0 }]] }
