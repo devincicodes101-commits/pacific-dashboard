@@ -1,6 +1,6 @@
 'use client';
 
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 
 interface Point {
   month: string;
@@ -13,33 +13,35 @@ const fmt = (n: number) =>
 
 export default function RevenueChart({ data }: { data: Point[] }) {
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+    <ResponsiveContainer width="100%" height={280}>
+      <AreaChart data={data} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#21d4fd" stopOpacity={0.5} />
-            <stop offset="95%" stopColor="#21d4fd" stopOpacity={0} />
+            <stop offset="0%" stopColor="#00F2FE" stopOpacity={0.28} />
+            <stop offset="100%" stopColor="#00F2FE" stopOpacity={0} />
           </linearGradient>
           <linearGradient id="conv" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#7551ff" stopOpacity={0.45} />
-            <stop offset="95%" stopColor="#7551ff" stopOpacity={0} />
+            <stop offset="0%" stopColor="#FF007F" stopOpacity={0.25} />
+            <stop offset="100%" stopColor="#FF007F" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
-        <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#8b95b5' }} axisLine={false} tickLine={false} />
+        <CartesianGrid strokeDasharray="4 4" stroke="#241A47" vertical={false} />
+        <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#8B86B8' }} axisLine={false} tickLine={false} dy={6} />
         <YAxis
-          tick={{ fontSize: 11, fill: '#8b95b5' }}
+          tick={{ fontSize: 11, fill: '#8B86B8' }}
           axisLine={false}
           tickLine={false}
           tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
         />
         <Tooltip
           formatter={(v: number) => fmt(v)}
-          contentStyle={{ borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', background: '#0f1535', color: '#fff', fontSize: 13 }}
-          labelStyle={{ color: '#a0aec0' }}
+          contentStyle={{ borderRadius: 12, border: '1px solid #2A2150', background: '#160E33', color: '#fff', fontSize: 13 }}
+          labelStyle={{ color: '#8B86B8' }}
+          cursor={{ stroke: '#2A2150' }}
         />
-        <Area type="monotone" dataKey="revenue" name="Revenue Produced" stroke="#21d4fd" strokeWidth={2.5} fill="url(#rev)" />
-        <Area type="monotone" dataKey="converted" name="Quotes Converted $" stroke="#7551ff" strokeWidth={2.5} fill="url(#conv)" />
+        <Legend wrapperStyle={{ fontSize: 12, color: '#8B86B8', paddingTop: 8 }} iconType="circle" />
+        <Area type="monotone" dataKey="revenue" name="Revenue Produced" stroke="#00F2FE" strokeWidth={2.5} fill="url(#rev)" />
+        <Area type="monotone" dataKey="converted" name="Quotes Converted $" stroke="#FF007F" strokeWidth={2.5} fill="url(#conv)" />
       </AreaChart>
     </ResponsiveContainer>
   );

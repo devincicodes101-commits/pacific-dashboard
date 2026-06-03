@@ -5,7 +5,24 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        brand: '#1a56db',
+        midnight: '#0B071E',
+        plum: {
+          DEFAULT: '#160E33',
+          light: '#1E1540',
+          border: '#2A2150',
+        },
+        muted: '#8B86B8',
+        neon: {
+          cyan: '#00F2FE',
+          magenta: '#FF007F',
+          green: '#00FF87',
+        },
+      },
+      fontFamily: {
+        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+      },
+      borderRadius: {
+        xl2: '1.25rem',
       },
     },
   },
