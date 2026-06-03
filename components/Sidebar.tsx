@@ -11,17 +11,26 @@ const IconDoc = () => (<svg {...base}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 
 const IconCog = () => (<svg {...base}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>);
 
 const NAV = [
-  { key: 'dashboard', label: 'Dashboard', icon: <IconGrid /> },
-  { key: 'analytics', label: 'Analytics', icon: <IconChart /> },
-  { key: 'salespeople', label: 'Salespeople', icon: <IconUsers /> },
-  { key: 'reports', label: 'Reports', icon: <IconDoc /> },
-  { key: 'settings', label: 'Settings', icon: <IconCog /> },
+  { key: 'dashboard', label: 'Dashboard', icon: <IconGrid />, target: 'top' },
+  { key: 'analytics', label: 'Analytics', icon: <IconChart />, target: 'analytics' },
+  { key: 'salespeople', label: 'Salespeople', icon: <IconUsers />, target: 'salespeople' },
+  { key: 'reports', label: 'Reports', icon: <IconDoc />, target: 'trend' },
+  { key: 'settings', label: 'Settings', icon: <IconCog />, target: 'top' },
 ];
 
 const PROJECTS = ['Jobber Sync', 'QuickBooks Sync'];
 
 export default function Sidebar() {
   const [active, setActive] = useState('dashboard');
+
+  const go = (key: string, target: string) => {
+    setActive(key);
+    if (target === 'top') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      document.getElementById(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   return (
     <aside className="hidden lg:flex flex-col w-60 shrink-0 h-screen sticky top-0 bg-plum/40 border-r border-plum-border px-5 py-6">
@@ -43,7 +52,7 @@ export default function Sidebar() {
           return (
             <button
               key={item.key}
-              onClick={() => setActive(item.key)}
+              onClick={() => go(item.key, item.target)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${
                 isActive ? 'bg-plum-light text-white border border-plum-border' : 'text-muted hover:text-white hover:bg-white/[0.03]'
               }`}

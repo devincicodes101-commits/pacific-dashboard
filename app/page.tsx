@@ -130,7 +130,7 @@ export default function Dashboard() {
               </section>
 
               {/* Sales — radial gauges */}
-              <section>
+              <section id="analytics" className="scroll-mt-24">
                 <SectionLabel>Sales Performance</SectionLabel>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                   <RadialGauge
@@ -158,12 +158,12 @@ export default function Dashboard() {
               </section>
 
               {/* Chart + table */}
-              <section className="grid grid-cols-1 xl:grid-cols-5 gap-5">
+              <section id="trend" className="grid grid-cols-1 xl:grid-cols-5 gap-5 scroll-mt-24">
                 <div className="xl:col-span-3 rounded-xl2 bg-plum border border-plum-border p-6">
                   <h2 className="text-sm font-semibold text-white mb-5">Revenue Trend</h2>
                   <RevenueChart data={chartData} />
                 </div>
-                <div className="xl:col-span-2 rounded-xl2 bg-plum border border-plum-border p-6">
+                <div id="salespeople" className="xl:col-span-2 rounded-xl2 bg-plum border border-plum-border p-6 scroll-mt-24">
                   <h2 className="text-sm font-semibold text-white mb-5">By Salesperson — {month}</h2>
                   <SalespersonTable rows={tableRows} />
                 </div>
