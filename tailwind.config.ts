@@ -5,24 +5,40 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        midnight: '#0B071E',
-        plum: {
-          DEFAULT: '#160E33',
-          light: '#1E1540',
-          border: '#2A2150',
+        // Surfaces
+        canvas: '#F4F6F8',   // page background — soft light gray
+        surface: '#FFFFFF',  // cards
+        line: '#E8ECF1',     // 1px razor borders
+        // Text
+        ink: {
+          DEFAULT: '#1E293B', // primary slate
+          soft: '#475569',    // secondary
+          muted: '#94A3B8',   // labels / subtext
         },
-        muted: '#8B86B8',
-        neon: {
-          cyan: '#00F2FE',
-          magenta: '#FF007F',
-          green: '#00FF87',
+        // Brand
+        coral: {
+          DEFAULT: '#FF6B4A',
+          dark: '#F1563B',
+          soft: '#FFF1ED',    // tinted icon wrapper / hover
+        },
+        // Corporate data tints
+        tint: {
+          blue: '#5B8DEF',
+          amber: '#F5A623',
+          purple: '#8B7FD6',
+          sage: '#4FB286',
         },
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
-        xl2: '1.25rem',
+        xl2: '1rem', // 16px — consistent card radius
+      },
+      boxShadow: {
+        // Diffused, near-invisible — depth without heavy dropshadow
+        card: '0 4px 20px rgba(15, 23, 42, 0.03)',
+        soft: '0 1px 3px rgba(15, 23, 42, 0.04)',
       },
     },
   },

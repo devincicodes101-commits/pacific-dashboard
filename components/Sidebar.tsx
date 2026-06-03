@@ -8,6 +8,7 @@ const IconGrid = () => (<svg {...base}><rect x="3" y="3" width="7" height="7" rx
 const IconChart = () => (<svg {...base}><path d="M3 3v18h18" /><path d="M7 14l4-4 3 3 5-6" /></svg>);
 const IconUsers = () => (<svg {...base}><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /></svg>);
 const IconDoc = () => (<svg {...base}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>);
+
 const NAV = [
   { key: 'dashboard', label: 'Dashboard', icon: <IconGrid />, target: 'top' },
   { key: 'analytics', label: 'Analytics', icon: <IconChart />, target: 'analytics' },
@@ -15,7 +16,7 @@ const NAV = [
   { key: 'reports', label: 'Reports', icon: <IconDoc />, target: 'trend' },
 ];
 
-const PROJECTS = ['Jobber Sync', 'QuickBooks Sync'];
+const SOURCES = ['Jobber Sync', 'QuickBooks Sync'];
 
 export default function Sidebar() {
   const [active, setActive] = useState('dashboard');
@@ -30,15 +31,15 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="hidden lg:flex flex-col w-60 shrink-0 h-screen sticky top-0 bg-plum/40 border-r border-plum-border px-5 py-6">
+    <aside className="hidden lg:flex flex-col w-64 shrink-0 h-screen sticky top-0 bg-surface border-r border-line px-5 py-6">
       {/* Brand */}
-      <div className="flex items-center gap-3 px-1 mb-8">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-neon-cyan to-[#3b82f6] flex items-center justify-center text-[#0B071E] font-extrabold text-sm">
+      <div className="flex items-center gap-3 px-1 mb-9">
+        <div className="w-9 h-9 rounded-xl bg-coral flex items-center justify-center text-white font-extrabold text-sm">
           P
         </div>
         <div className="leading-tight">
-          <p className="text-sm font-semibold text-white">Pacific</p>
-          <p className="text-[11px] text-muted">Heat Pumps</p>
+          <p className="text-sm font-bold text-ink">Pacific</p>
+          <p className="text-[11px] text-ink-muted">Heat Pumps</p>
         </div>
       </div>
 
@@ -50,32 +51,38 @@ export default function Sidebar() {
             <button
               key={item.key}
               onClick={() => go(item.key, item.target)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${
-                isActive ? 'bg-plum-light text-white border border-plum-border' : 'text-muted hover:text-white hover:bg-white/[0.03]'
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                isActive ? 'bg-coral-soft text-coral' : 'text-ink-soft hover:text-ink hover:bg-canvas'
               }`}
             >
-              <span className={isActive ? 'text-neon-cyan' : ''}>{item.icon}</span>
+              <span className={isActive ? 'text-coral' : 'text-ink-muted'}>{item.icon}</span>
               {item.label}
             </button>
           );
         })}
       </nav>
 
-      {/* Secondary list */}
-      <p className="text-[11px] font-semibold uppercase tracking-widest text-muted/70 mt-8 mb-3 px-3">Data Sources</p>
+      {/* Data sources */}
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-ink-muted mt-9 mb-3 px-3">Data Sources</p>
       <ul className="flex flex-col gap-1">
-        {PROJECTS.map((p) => (
-          <li key={p} className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted hover:text-white transition-colors cursor-default">
-            <span className="w-1.5 h-1.5 rounded-full bg-neon-green" />
-            {p}
+        {SOURCES.map((s) => (
+          <li key={s} className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink-soft cursor-default">
+            <span className="w-1.5 h-1.5 rounded-full bg-tint-sage" />
+            {s}
           </li>
         ))}
       </ul>
 
       {/* Footer status */}
-      <div className="mt-auto rounded-xl border border-plum-border bg-plum-light/50 p-4">
-        <p className="text-xs text-white font-medium mb-1">Live sync active</p>
-        <p className="text-[11px] text-muted leading-snug">Data refreshes automatically from Jobber &amp; QuickBooks.</p>
+      <div className="mt-auto rounded-xl2 border border-line bg-canvas p-4">
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-tint-sage opacity-60 animate-ping" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-tint-sage" />
+          </span>
+          <p className="text-xs text-ink font-semibold">Live sync active</p>
+        </div>
+        <p className="text-[11px] text-ink-muted leading-snug">Data refreshes automatically from Jobber &amp; QuickBooks.</p>
       </div>
     </aside>
   );
