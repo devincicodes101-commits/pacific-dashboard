@@ -68,18 +68,21 @@ export default function Dashboard() {
     };
   }, []);
 
-  const salespeople = ['Ross', 'Matt', 'Cody', 'Office'];
   const v = (m: MonthMap | undefined) => (m && month ? m[month] ?? 0 : 0);
 
+  // Every real salesperson from Jobber, only those active in the selected month, sorted by quotes sent.
   const tableRows = data
-    ? salespeople.map((sp) => ({
-        name: sp,
-        sent: data.quotesSent.byPerson[sp]?.[month] ?? 0,
-        converted: data.quotesConverted.byPerson[sp]?.[month] ?? 0,
-        conversionRate: data.conversionRate.byPerson[sp]?.[month] ?? 0,
-        convertedDollars: data.convertedDollars.byPerson[sp]?.[month] ?? 0,
-        avgSale: data.avgSale.byPerson[sp]?.[month] ?? 0,
-      }))
+    ? Object.keys(data.quotesSent.byPerson)
+        .map((sp) => ({
+          name: sp,
+          sent: data.quotesSent.byPerson[sp]?.[month] ?? 0,
+          converted: data.quotesConverted.byPerson[sp]?.[month] ?? 0,
+          conversionRate: data.conversionRate.byPerson[sp]?.[month] ?? 0,
+          convertedDollars: data.convertedDollars.byPerson[sp]?.[month] ?? 0,
+          avgSale: data.avgSale.byPerson[sp]?.[month] ?? 0,
+        }))
+        .filter((r) => r.sent > 0 || r.converted > 0 || r.convertedDollars > 0)
+        .sort((a, b) => b.sent - a.sent || b.convertedDollars - a.convertedDollars)
     : [];
 
   const chartData = data

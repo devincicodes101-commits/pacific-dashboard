@@ -10,13 +10,28 @@ interface Row {
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(n);
 
-const initials = (name: string) => name.slice(0, 2).toUpperCase();
+const initials = (name: string) => {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
 
-const AVATAR_COLORS: Record<string, string> = {
-  Ross: 'from-blue-500 to-cyan-400',
-  Matt: 'from-violet-500 to-purple-400',
-  Cody: 'from-amber-500 to-orange-400',
-  Office: 'from-slate-500 to-slate-400',
+const PALETTE = [
+  'from-blue-500 to-cyan-400',
+  'from-violet-500 to-purple-400',
+  'from-amber-500 to-orange-400',
+  'from-emerald-500 to-teal-400',
+  'from-fuchsia-500 to-pink-400',
+  'from-sky-500 to-indigo-400',
+  'from-rose-500 to-red-400',
+  'from-lime-500 to-green-400',
+];
+
+// Deterministic colour per name so each rep keeps the same avatar colour.
+const avatarColor = (name: string) => {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return PALETTE[h % PALETTE.length];
 };
 
 export default function SalespersonTable({ rows }: { rows: Row[] }) {
@@ -42,7 +57,7 @@ export default function SalespersonTable({ rows }: { rows: Row[] }) {
             <tr key={r.name} className="border-b border-white/5 hover:bg-white/[0.04] transition-colors">
               <td className="py-3 px-4">
                 <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full bg-gradient-to-br flex items-center justify-center text-xs font-bold text-white shadow-md ${AVATAR_COLORS[r.name] || 'from-slate-500 to-slate-400'}`}>
+                  <div className={`w-8 h-8 rounded-full bg-gradient-to-br flex items-center justify-center text-xs font-bold text-white shadow-md ${avatarColor(r.name)}`}>
                     {initials(r.name)}
                   </div>
                   <span className="font-semibold text-slate-100">{r.name}</span>
