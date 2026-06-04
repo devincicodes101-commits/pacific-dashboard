@@ -8,7 +8,6 @@ import RadialGauge from '@/components/RadialGauge';
 import SalespersonTable from '@/components/SalespersonTable';
 import RevenueChart from '@/components/RevenueChart';
 import { supabase } from '@/lib/supabase';
-import { TARGETS } from '@/lib/targets';
 import {
   IconRevenue, IconLeads, IconRequests,
   IconSent, IconConverted,
@@ -36,7 +35,6 @@ const fmtCurrency = (n: number) =>
   new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(n);
 const fmtNum = (n: number) => new Intl.NumberFormat('en-CA').format(Math.round(n));
 const fmtCompact = (n: number) => (n >= 1000 ? `$${Math.round(n / 1000)}k` : `$${Math.round(n)}`);
-const pctOf = (val: number, target: number) => (target > 0 ? Math.min((val / target) * 100, 100) : 0);
 
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -95,6 +93,13 @@ export default function Dashboard() {
 
   const series = (m: MonthMap) => (data ? data.months.map((mm) => m[mm] ?? 0) : []);
 
+  // Ring fill for the $ gauges: this month relative to the year's peak month (no external target).
+  const peakPct = (m: MonthMap) => {
+    if (!data) return 0;
+    const max = Math.max(...data.months.map((mm) => m[mm] ?? 0), 1);
+    return ((m[month] ?? 0) / max) * 100;
+  };
+
   return (
     <div className="flex min-h-screen bg-canvas">
       <Sidebar />
@@ -115,7 +120,7 @@ export default function Dashboard() {
               <section>
                 <SectionLabel>Finance</SectionLabel>
                 <div className="grid grid-cols-1">
-                  <KpiCard label="Payments Collected" value={fmtCurrency(v(data.revenueProduced))} rawValue={v(data.revenueProduced)} target={TARGETS.revenueProduced} icon={<IconRevenue />} accent="#4FB286" trend={series(data.revenueProduced)} />
+                  <KpiCard label="Payments Collected" value={fmtCurrency(v(data.revenueProduced))} icon={<IconRevenue />} accent="#4FB286" trend={series(data.revenueProduced)} />
                 </div>
               </section>
 
@@ -123,10 +128,10 @@ export default function Dashboard() {
               <section>
                 <SectionLabel>Marketing</SectionLabel>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-                  <KpiCard label="New Leads" value={fmtNum(v(data.newLeads))} rawValue={v(data.newLeads)} target={TARGETS.newLeads} icon={<IconLeads />} accent="#5B8DEF" trend={series(data.newLeads)} />
-                  <KpiCard label="New Requests" value={fmtNum(v(data.newRequests))} rawValue={v(data.newRequests)} target={TARGETS.newRequests} icon={<IconRequests />} accent="#8B7FD6" trend={series(data.newRequests)} />
-                  <KpiCard label="Quotes Sent" value={fmtNum(v(data.quotesSent.total))} rawValue={v(data.quotesSent.total)} target={TARGETS.quotesSent} icon={<IconSent />} accent="#F5A623" trend={series(data.quotesSent.total)} />
-                  <KpiCard label="Quotes Converted" value={fmtNum(v(data.quotesConverted.total))} rawValue={v(data.quotesConverted.total)} target={TARGETS.quotesConverted} icon={<IconConverted />} accent="#4FB286" trend={series(data.quotesConverted.total)} />
+                  <KpiCard label="New Leads" value={fmtNum(v(data.newLeads))} icon={<IconLeads />} accent="#5B8DEF" trend={series(data.newLeads)} />
+                  <KpiCard label="New Requests" value={fmtNum(v(data.newRequests))} icon={<IconRequests />} accent="#8B7FD6" trend={series(data.newRequests)} />
+                  <KpiCard label="Quotes Sent" value={fmtNum(v(data.quotesSent.total))} icon={<IconSent />} accent="#F5A623" trend={series(data.quotesSent.total)} />
+                  <KpiCard label="Quotes Converted" value={fmtNum(v(data.quotesConverted.total))} icon={<IconConverted />} accent="#4FB286" trend={series(data.quotesConverted.total)} />
                 </div>
               </section>
 
@@ -137,23 +142,20 @@ export default function Dashboard() {
                   <RadialGauge
                     label="Conversion Rate"
                     centerValue={`${v(data.conversionRate.total).toFixed(1)}%`}
-                    pct={pctOf(v(data.conversionRate.total), TARGETS.conversionRate)}
+                    pct={Math.min(v(data.conversionRate.total), 100)}
                     color="#5B8DEF"
-                    caption={`Target ${TARGETS.conversionRate}%`}
                   />
                   <RadialGauge
                     label="Quotes Converted $"
                     centerValue={fmtCompact(v(data.convertedDollars.total))}
-                    pct={pctOf(v(data.convertedDollars.total), TARGETS.convertedDollars)}
+                    pct={peakPct(data.convertedDollars.total)}
                     color="#FF6B4A"
-                    caption={`Target ${fmtCompact(TARGETS.convertedDollars)}`}
                   />
                   <RadialGauge
                     label="Average Sale Value"
                     centerValue={fmtCompact(v(data.avgSale.total))}
-                    pct={pctOf(v(data.avgSale.total), TARGETS.avgSale)}
+                    pct={peakPct(data.avgSale.total)}
                     color="#4FB286"
-                    caption={`Target ${fmtCompact(TARGETS.avgSale)}`}
                   />
                 </div>
               </section>

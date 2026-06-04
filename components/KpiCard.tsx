@@ -5,30 +5,11 @@ interface KpiCardProps {
   label: string;
   value: string;
   icon: ReactNode;
-  target?: number;
-  rawValue?: number;
-  accent?: string;       // hex for top strip + tinted icon
-  trend?: number[];      // monthly series for the sparkline
-  higherIsBetter?: boolean;
+  accent?: string;    // hex for top strip + tinted icon
+  trend?: number[];   // monthly series for the sparkline
 }
 
-export default function KpiCard({
-  label,
-  value,
-  icon,
-  target,
-  rawValue,
-  accent = '#5B8DEF',
-  trend,
-  higherIsBetter = true,
-}: KpiCardProps) {
-  const hasProgress = typeof target === 'number' && typeof rawValue === 'number' && target > 0;
-  const pct = hasProgress ? Math.min(Math.round((rawValue! / target) * 100), 999) : 0;
-
-  const onTrack = higherIsBetter ? pct >= 90 : pct <= 110;
-  const close = higherIsBetter ? pct >= 60 : pct <= 140;
-  const statusColor = onTrack ? '#4FB286' : close ? '#F5A623' : '#FF6B4A';
-
+export default function KpiCard({ label, value, icon, accent = '#5B8DEF', trend }: KpiCardProps) {
   const hasTrend = Array.isArray(trend) && trend.length > 1;
 
   return (
@@ -46,17 +27,7 @@ export default function KpiCard({
         </div>
       </div>
 
-      <div className="flex items-end justify-between gap-3">
-        <p className="text-[28px] leading-none font-bold text-ink tabular-nums">{value}</p>
-        {hasProgress && (
-          <span
-            className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-bold tabular-nums leading-none"
-            style={{ background: `${statusColor}1A`, color: statusColor }}
-          >
-            {pct}% of target
-          </span>
-        )}
-      </div>
+      <p className="text-[28px] leading-none font-bold text-ink tabular-nums">{value}</p>
 
       {hasTrend && (
         <div className="mt-4 -mb-1">

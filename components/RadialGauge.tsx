@@ -34,7 +34,6 @@ export default function RadialGauge({ label, centerValue, pct, color, caption }:
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-2xl font-bold text-ink tabular-nums">{centerValue}</span>
-          <span className="text-[11px] font-semibold tabular-nums" style={{ color }}>{Math.round(pct)}%</span>
         </div>
       </div>
       {caption && <p className="text-xs text-ink-muted mt-4 text-center font-medium">{caption}</p>}
