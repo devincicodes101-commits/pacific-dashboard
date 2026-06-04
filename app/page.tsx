@@ -158,16 +158,16 @@ export default function Dashboard() {
                 </div>
               </section>
 
-              {/* Chart + table */}
-              <section id="trend" className="grid grid-cols-1 xl:grid-cols-5 gap-5 scroll-mt-24">
-                <div className="xl:col-span-3 rounded-xl2 bg-surface border border-line shadow-card p-6">
-                  <h2 className="text-sm font-bold text-ink mb-5">Revenue Trend</h2>
-                  <RevenueChart data={chartData} />
-                </div>
-                <div id="salespeople" className="xl:col-span-2 rounded-xl2 bg-surface border border-line shadow-card p-6 scroll-mt-24">
-                  <h2 className="text-sm font-bold text-ink mb-5">By Salesperson — {month}</h2>
-                  <SalespersonTable rows={tableRows} />
-                </div>
+              {/* Revenue trend — full width */}
+              <section id="trend" className="rounded-xl2 bg-surface border border-line shadow-card p-6 scroll-mt-24">
+                <h2 className="text-sm font-bold text-ink mb-5">Revenue Trend</h2>
+                <RevenueChart data={chartData} />
+              </section>
+
+              {/* By Salesperson — its own full-width box, no horizontal scroll */}
+              <section id="salespeople" className="rounded-xl2 bg-surface border border-line shadow-card p-6 scroll-mt-24">
+                <h2 className="text-sm font-bold text-ink mb-5">By Salesperson — {month}</h2>
+                <SalespersonTable rows={tableRows} />
               </section>
 
               <p className="text-center text-xs text-ink-muted pt-2">

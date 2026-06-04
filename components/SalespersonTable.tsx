@@ -35,7 +35,7 @@ export default function SalespersonTable({ rows }: { rows: Row[] }) {
             {['Salesperson', 'Sent', 'Converted', 'Conv. Rate', 'Converted $', 'Avg Sale'].map((h, i) => (
               <th
                 key={h}
-                className={`py-3 px-3 text-[11px] font-semibold uppercase tracking-widest text-ink-muted ${i === 0 ? 'text-left' : 'text-right'}`}
+                className={`py-4 px-4 text-[11px] font-semibold uppercase tracking-widest text-ink-muted ${i === 0 ? 'text-left' : 'text-right'}`}
               >
                 {h}
               </th>
@@ -47,7 +47,7 @@ export default function SalespersonTable({ rows }: { rows: Row[] }) {
             const c = avatarColor(r.name);
             return (
               <tr key={r.name} className="border-b border-line/70 hover:bg-canvas transition-colors">
-                <td className="py-3 px-3">
+                <td className="py-4 px-4">
                   <div className="flex items-center gap-3">
                     <div
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold shrink-0"
@@ -58,9 +58,9 @@ export default function SalespersonTable({ rows }: { rows: Row[] }) {
                     <span className="font-semibold text-ink whitespace-nowrap">{r.name}</span>
                   </div>
                 </td>
-                <td className="py-3 px-3 text-right text-ink-soft tabular-nums">{r.sent}</td>
-                <td className="py-3 px-3 text-right text-ink-soft tabular-nums">{r.converted}</td>
-                <td className="py-3 px-3 text-right tabular-nums">
+                <td className="py-4 px-4 text-right text-ink-soft tabular-nums">{r.sent}</td>
+                <td className="py-4 px-4 text-right text-ink-soft tabular-nums">{r.converted}</td>
+                <td className="py-4 px-4 text-right tabular-nums">
                   <span
                     className="font-bold"
                     style={{ color: r.conversionRate >= 34 ? '#4FB286' : r.conversionRate >= 20 ? '#F5A623' : '#FF6B4A' }}
@@ -68,8 +68,8 @@ export default function SalespersonTable({ rows }: { rows: Row[] }) {
                     {r.conversionRate.toFixed(1)}%
                   </span>
                 </td>
-                <td className="py-3 px-3 text-right text-ink-soft tabular-nums">{fmt(r.convertedDollars)}</td>
-                <td className="py-3 px-3 text-right text-ink-soft tabular-nums">{fmt(r.avgSale)}</td>
+                <td className="py-4 px-4 text-right text-ink-soft tabular-nums">{fmt(r.convertedDollars)}</td>
+                <td className="py-4 px-4 text-right text-ink-soft tabular-nums">{fmt(r.avgSale)}</td>
               </tr>
             );
           })}
