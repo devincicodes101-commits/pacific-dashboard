@@ -154,7 +154,7 @@
         "headerParameters": { "parameters": [ { "name": "X-JOBBER-GRAPHQL-VERSION", "value": "2025-04-16" } ] },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ query: \"query GetInvoices($cursor: String) { invoices(first: 50, after: $cursor) { nodes { id invoiceNumber createdAt issuedDate amounts { total } paymentRecords { nodes { id amount } } } pageInfo { endCursor hasNextPage } } }\", variables: { cursor: $json.cursor || null } }) }}",
+        "jsonBody": "={{ JSON.stringify({ query: \"query GetInvoices($cursor: String) { invoices(first: 20, after: $cursor) { nodes { id invoiceNumber createdAt issuedDate amounts { total } paymentRecords(first: 30) { nodes { id amount } } } pageInfo { endCursor hasNextPage } } }\", variables: { cursor: $json.cursor || null } }) }}",
         "options": {}
       },
       "id": "invoices-page",
@@ -165,7 +165,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst resp = $input.first().json;\nif (!sd.iStarted) { sd.iAll = []; sd.iStarted = true; sd.iPages = 0; sd.iCursor = null; }\nconst throttled = resp && resp.errors && resp.errors.some(e => e && e.extensions && e.extensions.code === 'THROTTLED');\nif (throttled) { await new Promise(r => setTimeout(r, 2500)); return [{ done: false, cursor: sd.iCursor }]; }\nconst conn = (resp && resp.data && resp.data.invoices) ? resp.data.invoices : null;\nif (conn) {\n  sd.iAll = sd.iAll.concat(conn.nodes || []);\n  sd.iPages = (sd.iPages || 0) + 1;\n  const pi = conn.pageInfo || {};\n  if (pi.hasNextPage && pi.endCursor && sd.iPages < 200) { sd.iCursor = pi.endCursor; return [{ done: false, cursor: pi.endCursor }]; }\n}\nsd.iStarted = false;\nreturn [{ done: true, count: (sd.iAll || []).length }];"
+        "jsCode": "const sd = $getWorkflowStaticData('global');\nconst resp = $input.first().json;\nif (!sd.iStarted) { sd.iAll = []; sd.iStarted = true; sd.iPages = 0; sd.iCursor = null; sd.iThrottle = 0; }\nconst throttled = resp && resp.errors && resp.errors.some(e => e && e.extensions && e.extensions.code === 'THROTTLED');\nif (throttled) { sd.iThrottle = (sd.iThrottle || 0) + 1; if (sd.iThrottle > 60) { sd.iStarted = false; return [{ done: true, count: (sd.iAll || []).length }]; } await new Promise(r => setTimeout(r, 2500)); return [{ done: false, cursor: sd.iCursor }]; }\nconst conn = (resp && resp.data && resp.data.invoices) ? resp.data.invoices : null;\nif (conn) {\n  sd.iThrottle = 0;\n  sd.iAll = sd.iAll.concat(conn.nodes || []);\n  sd.iPages = (sd.iPages || 0) + 1;\n  const pi = conn.pageInfo || {};\n  if (pi.hasNextPage && pi.endCursor && sd.iPages < 400) { sd.iCursor = pi.endCursor; return [{ done: false, cursor: pi.endCursor }]; }\n}\nsd.iStarted = false;\nreturn [{ done: true, count: (sd.iAll || []).length }];"
       },
       "id": "invoices-collect",
       "name": "Invoices Collect",
