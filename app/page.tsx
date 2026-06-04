@@ -10,7 +10,7 @@ import RevenueChart from '@/components/RevenueChart';
 import { supabase } from '@/lib/supabase';
 import { TARGETS } from '@/lib/targets';
 import {
-  IconRevenue, IconCash, IconLeads, IconRequests,
+  IconRevenue, IconLeads, IconRequests,
   IconSent, IconConverted,
 } from '@/components/icons';
 
@@ -114,9 +114,8 @@ export default function Dashboard() {
               {/* Finance */}
               <section>
                 <SectionLabel>Finance</SectionLabel>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1">
                   <KpiCard label="Revenue Produced" value={fmtCurrency(v(data.revenueProduced))} rawValue={v(data.revenueProduced)} target={TARGETS.revenueProduced} icon={<IconRevenue />} accent="#4FB286" trend={series(data.revenueProduced)} />
-                  <KpiCard label="Cash Collected" value={fmtCurrency(v(data.cashCollected))} rawValue={v(data.cashCollected)} target={TARGETS.cashCollected} icon={<IconCash />} accent="#5B8DEF" trend={series(data.cashCollected)} />
                 </div>
               </section>
 
