@@ -40,7 +40,7 @@ export default function RevenueChart({ data }: { data: Point[] }) {
           cursor={{ stroke: '#E2E8F0' }}
         />
         <Legend wrapperStyle={{ fontSize: 12, color: '#64748B', paddingTop: 8 }} iconType="circle" />
-        <Area type="monotone" dataKey="revenue" name="Revenue Produced" stroke="#5B8DEF" strokeWidth={2.5} fill="url(#rev)" dot={false} activeDot={{ r: 4 }} />
+        <Area type="monotone" dataKey="revenue" name="Payments Collected" stroke="#5B8DEF" strokeWidth={2.5} fill="url(#rev)" dot={false} activeDot={{ r: 4 }} />
         <Area type="monotone" dataKey="converted" name="Quotes Converted $" stroke="#FF6B4A" strokeWidth={2.5} fill="url(#conv)" dot={false} activeDot={{ r: 4 }} />
       </AreaChart>
     </ResponsiveContainer>

@@ -115,7 +115,7 @@ export default function Dashboard() {
               <section>
                 <SectionLabel>Finance</SectionLabel>
                 <div className="grid grid-cols-1">
-                  <KpiCard label="Revenue Produced" value={fmtCurrency(v(data.revenueProduced))} rawValue={v(data.revenueProduced)} target={TARGETS.revenueProduced} icon={<IconRevenue />} accent="#4FB286" trend={series(data.revenueProduced)} />
+                  <KpiCard label="Payments Collected" value={fmtCurrency(v(data.revenueProduced))} rawValue={v(data.revenueProduced)} target={TARGETS.revenueProduced} icon={<IconRevenue />} accent="#4FB286" trend={series(data.revenueProduced)} />
                 </div>
               </section>
 
