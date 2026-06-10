@@ -16,8 +16,7 @@ import {
 interface MonthMap { [m: string]: number }
 interface Grouped { total: MonthMap; byPerson: Record<string, MonthMap> }
 
-interface DashboardData {
-  months: string[];
+interface ViewBlock {
   revenueProduced: MonthMap;
   cashCollected: MonthMap;
   newLeads: MonthMap;
@@ -27,9 +26,17 @@ interface DashboardData {
   conversionRate: Grouped;
   convertedDollars: Grouped;
   avgSale: Grouped;
+}
+
+interface DashboardData extends ViewBlock {
+  months: string[];
+  weeks?: string[];
+  weekly?: ViewBlock;
   _source?: string;
   _syncedAt?: string;
 }
+
+type Mode = 'month' | 'week';
 
 const fmtCurrency = (n: number) =>
   new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(n);
@@ -40,7 +47,8 @@ export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [month, setMonth] = useState('');
+  const [mode, setMode] = useState<Mode>('month');
+  const [period, setPeriod] = useState('');
   const [live, setLive] = useState(false);
 
   const loadKpis = () => {
@@ -49,7 +57,7 @@ export default function Dashboard() {
       .then((d) => {
         if (d.error) throw new Error(d.error);
         setData(d);
-        if (d.months?.length) setMonth((prev) => prev || d.months[d.months.length - 1]);
+        if (d.months?.length) setPeriod((prev) => prev || d.months[d.months.length - 1]);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -71,41 +79,58 @@ export default function Dashboard() {
     };
   }, []);
 
-  const v = (m: MonthMap | undefined) => (m && month ? m[month] ?? 0 : 0);
+  // Which period labels + metric block are active for the chosen mode.
+  const periods: string[] = (mode === 'week' ? data?.weeks : data?.months) ?? [];
+  const view: ViewBlock | null = data ? (mode === 'week' && data.weekly ? data.weekly : data) : null;
+  const weekAvailable = !!data?.weeks?.length && !!data?.weekly;
 
-  const tableRows = data
-    ? Object.keys(data.quotesSent.byPerson)
+  const changeMode = (m: Mode) => {
+    if (m === mode) return;
+    setMode(m);
+    const ps = (m === 'week' ? data?.weeks : data?.months) ?? [];
+    setPeriod(ps[ps.length - 1] ?? '');
+  };
+
+  const v = (m: MonthMap | undefined) => (m && period ? m[period] ?? 0 : 0);
+  const series = (m: MonthMap | undefined) => (m ? periods.map((p) => m[p] ?? 0) : []);
+  const peakPct = (m: MonthMap | undefined) => {
+    if (!m || !periods.length) return 0;
+    const max = Math.max(...periods.map((p) => m[p] ?? 0), 1);
+    return ((m[period] ?? 0) / max) * 100;
+  };
+
+  const tableRows = view
+    ? Object.keys(view.quotesSent.byPerson)
         .map((sp) => ({
           name: sp,
-          sent: data.quotesSent.byPerson[sp]?.[month] ?? 0,
-          converted: data.quotesConverted.byPerson[sp]?.[month] ?? 0,
-          conversionRate: data.conversionRate.byPerson[sp]?.[month] ?? 0,
-          convertedDollars: data.convertedDollars.byPerson[sp]?.[month] ?? 0,
-          avgSale: data.avgSale.byPerson[sp]?.[month] ?? 0,
+          sent: view.quotesSent.byPerson[sp]?.[period] ?? 0,
+          converted: view.quotesConverted.byPerson[sp]?.[period] ?? 0,
+          conversionRate: view.conversionRate.byPerson[sp]?.[period] ?? 0,
+          convertedDollars: view.convertedDollars.byPerson[sp]?.[period] ?? 0,
+          avgSale: view.avgSale.byPerson[sp]?.[period] ?? 0,
         }))
         .filter((r) => r.sent > 0 || r.converted > 0 || r.convertedDollars > 0)
         .sort((a, b) => b.sent - a.sent || b.convertedDollars - a.convertedDollars)
     : [];
 
-  const chartData = data
-    ? data.months.map((m) => ({ month: m, revenue: data.revenueProduced[m] ?? 0, converted: data.convertedDollars.total[m] ?? 0 }))
+  const chartData = view
+    ? periods.map((p) => ({ month: p, revenue: view.revenueProduced[p] ?? 0, converted: view.convertedDollars.total[p] ?? 0 }))
     : [];
-
-  const series = (m: MonthMap) => (data ? data.months.map((mm) => m[mm] ?? 0) : []);
-
-  // Ring fill for the $ gauges: this month relative to the year's peak month (no external target).
-  const peakPct = (m: MonthMap) => {
-    if (!data) return 0;
-    const max = Math.max(...data.months.map((mm) => m[mm] ?? 0), 1);
-    return ((m[month] ?? 0) / max) * 100;
-  };
 
   return (
     <div className="flex min-h-screen bg-canvas">
       <Sidebar />
 
       <div className="flex-1 min-w-0">
-        <Topbar months={data?.months ?? []} month={month} setMonth={setMonth} live={live} />
+        <Topbar
+          mode={mode}
+          setMode={changeMode}
+          weekAvailable={weekAvailable}
+          periods={periods}
+          period={period}
+          setPeriod={setPeriod}
+          live={live}
+        />
 
         <main className="px-6 lg:px-8 py-8 max-w-[1500px] mx-auto">
           {error && (
@@ -114,13 +139,13 @@ export default function Dashboard() {
 
           {loading ? (
             <div className="flex items-center justify-center h-64 text-ink-muted">Loading…</div>
-          ) : data && month ? (
+          ) : view && period ? (
             <div className="space-y-8">
               {/* Finance */}
               <section>
                 <SectionLabel>Finance</SectionLabel>
                 <div className="grid grid-cols-1">
-                  <KpiCard label="Payments Collected" value={fmtCurrency(v(data.revenueProduced))} icon={<IconRevenue />} accent="#4FB286" trend={series(data.revenueProduced)} />
+                  <KpiCard label="Payments Collected" value={fmtCurrency(v(view.revenueProduced))} icon={<IconRevenue />} accent="#4FB286" trend={series(view.revenueProduced)} />
                 </div>
               </section>
 
@@ -128,10 +153,10 @@ export default function Dashboard() {
               <section>
                 <SectionLabel>Marketing</SectionLabel>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-                  <KpiCard label="New Leads" value={fmtNum(v(data.newLeads))} icon={<IconLeads />} accent="#5B8DEF" trend={series(data.newLeads)} />
-                  <KpiCard label="New Requests" value={fmtNum(v(data.newRequests))} icon={<IconRequests />} accent="#8B7FD6" trend={series(data.newRequests)} />
-                  <KpiCard label="Quotes Sent" value={fmtNum(v(data.quotesSent.total))} icon={<IconSent />} accent="#F5A623" trend={series(data.quotesSent.total)} />
-                  <KpiCard label="Quotes Converted" value={fmtNum(v(data.quotesConverted.total))} icon={<IconConverted />} accent="#4FB286" trend={series(data.quotesConverted.total)} />
+                  <KpiCard label="New Leads" value={fmtNum(v(view.newLeads))} icon={<IconLeads />} accent="#5B8DEF" trend={series(view.newLeads)} />
+                  <KpiCard label="New Requests" value={fmtNum(v(view.newRequests))} icon={<IconRequests />} accent="#8B7FD6" trend={series(view.newRequests)} />
+                  <KpiCard label="Quotes Sent" value={fmtNum(v(view.quotesSent.total))} icon={<IconSent />} accent="#F5A623" trend={series(view.quotesSent.total)} />
+                  <KpiCard label="Quotes Converted" value={fmtNum(v(view.quotesConverted.total))} icon={<IconConverted />} accent="#4FB286" trend={series(view.quotesConverted.total)} />
                 </div>
               </section>
 
@@ -141,40 +166,40 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                   <RadialGauge
                     label="Conversion Rate"
-                    centerValue={`${v(data.conversionRate.total).toFixed(1)}%`}
-                    pct={Math.min(v(data.conversionRate.total), 100)}
+                    centerValue={`${v(view.conversionRate.total).toFixed(1)}%`}
+                    pct={Math.min(v(view.conversionRate.total), 100)}
                     color="#5B8DEF"
                   />
                   <RadialGauge
                     label="Quotes Converted $"
-                    centerValue={fmtCompact(v(data.convertedDollars.total))}
-                    pct={peakPct(data.convertedDollars.total)}
+                    centerValue={fmtCompact(v(view.convertedDollars.total))}
+                    pct={peakPct(view.convertedDollars.total)}
                     color="#FF6B4A"
                   />
                   <RadialGauge
                     label="Average Sale Value"
-                    centerValue={fmtCompact(v(data.avgSale.total))}
-                    pct={peakPct(data.avgSale.total)}
+                    centerValue={fmtCompact(v(view.avgSale.total))}
+                    pct={peakPct(view.avgSale.total)}
                     color="#4FB286"
                   />
                 </div>
               </section>
 
-              {/* Revenue trend — full width */}
+              {/* Trend — full width */}
               <section id="trend" className="rounded-xl2 bg-surface border border-line shadow-card p-6 scroll-mt-24">
-                <h2 className="text-sm font-bold text-ink mb-5">Revenue Trend</h2>
+                <h2 className="text-sm font-bold text-ink mb-5">{mode === 'week' ? 'Weekly Trend' : 'Revenue Trend'}</h2>
                 <RevenueChart data={chartData} />
               </section>
 
-              {/* By Salesperson — its own full-width box, no horizontal scroll */}
+              {/* By Salesperson — its own full-width box */}
               <section id="salespeople" className="rounded-xl2 bg-surface border border-line shadow-card p-6 scroll-mt-24">
-                <h2 className="text-sm font-bold text-ink mb-5">By Salesperson — {month}</h2>
+                <h2 className="text-sm font-bold text-ink mb-5">By Salesperson — {period}</h2>
                 <SalespersonTable rows={tableRows} />
               </section>
 
               <p className="text-center text-xs text-ink-muted pt-2">
-                {data._source === 'jobber'
-                  ? `Synced from Jobber + QuickBooks${data._syncedAt ? ` · ${new Date(data._syncedAt).toLocaleString()}` : ''}`
+                {data?._source === 'jobber'
+                  ? `Synced from Jobber${data._syncedAt ? ` · ${new Date(data._syncedAt).toLocaleString()}` : ''}`
                   : 'Awaiting first sync from Jobber…'}
               </p>
             </div>

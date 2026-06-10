@@ -1,9 +1,14 @@
 'use client';
 
+type Mode = 'month' | 'week';
+
 interface TopbarProps {
-  months: string[];
-  month: string;
-  setMonth: (m: string) => void;
+  mode: Mode;
+  setMode: (m: Mode) => void;
+  weekAvailable: boolean;
+  periods: string[];
+  period: string;
+  setPeriod: (p: string) => void;
   live: boolean;
 }
 
@@ -17,13 +22,8 @@ const IconBell = () => (
     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
   </svg>
 );
-const IconChevron = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="6 9 12 15 18 9" />
-  </svg>
-);
 
-export default function Topbar({ months, month, setMonth, live }: TopbarProps) {
+export default function Topbar({ mode, setMode, weekAvailable, periods, period, setPeriod, live }: TopbarProps) {
   return (
     <header className="sticky top-0 z-20 bg-surface border-b border-line">
       <div className="px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
@@ -35,37 +35,63 @@ export default function Topbar({ months, month, setMonth, live }: TopbarProps) {
 
         {/* Right cluster */}
         <div className="flex items-center gap-3">
-          {/* Month selector */}
-          {months.length ? (
-            <div className="hidden md:flex rounded-xl border border-line bg-canvas p-0.5 gap-0.5">
-              {months.map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setMonth(m)}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                    month === m ? 'bg-coral text-white shadow-soft' : 'text-ink-soft hover:text-ink'
-                  }`}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
+          {/* Month / Week toggle */}
+          <div className="flex rounded-xl border border-line bg-canvas p-0.5 gap-0.5">
+            <button
+              onClick={() => setMode('month')}
+              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${mode === 'month' ? 'bg-ink text-white shadow-soft' : 'text-ink-soft hover:text-ink'}`}
+            >
+              Month
+            </button>
+            <button
+              onClick={() => weekAvailable && setMode('week')}
+              disabled={!weekAvailable}
+              title={weekAvailable ? '' : 'Re-run the sync to enable weekly'}
+              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                mode === 'week' ? 'bg-ink text-white shadow-soft' : weekAvailable ? 'text-ink-soft hover:text-ink' : 'text-ink-muted/50 cursor-not-allowed'
+              }`}
+            >
+              Week
+            </button>
+          </div>
+
+          {/* Period selector — segmented for months, dropdown for weeks */}
+          {periods.length ? (
+            mode === 'week' ? (
+              <select
+                value={period}
+                onChange={(e) => setPeriod(e.target.value)}
+                className="rounded-xl border border-line bg-canvas px-3 py-2 text-sm font-medium text-ink focus:outline-none focus:border-coral/40 cursor-pointer"
+              >
+                {periods.map((p) => (
+                  <option key={p} value={p}>Week of {p}</option>
+                ))}
+              </select>
+            ) : (
+              <div className="hidden md:flex rounded-xl border border-line bg-canvas p-0.5 gap-0.5">
+                {periods.map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPeriod(p)}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                      period === p ? 'bg-coral text-white shadow-soft' : 'text-ink-soft hover:text-ink'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            )
           ) : null}
 
           {/* Search */}
-          <div className="hidden xl:flex items-center gap-2 rounded-xl border border-line bg-canvas px-3 py-2 text-ink-muted w-52 focus-within:border-coral/40 transition-colors">
+          <div className="hidden xl:flex items-center gap-2 rounded-xl border border-line bg-canvas px-3 py-2 text-ink-muted w-44 focus-within:border-coral/40 transition-colors">
             <IconSearch />
             <input
               placeholder="Search…"
               className="bg-transparent text-sm text-ink placeholder:text-ink-muted focus:outline-none w-full"
             />
           </div>
-
-          {/* Language selector */}
-          <button className="hidden sm:flex items-center gap-1.5 rounded-xl border border-line bg-canvas px-3 py-2 text-sm font-medium text-ink-soft hover:text-ink transition-colors">
-            <span>EN</span>
-            <span className="text-ink-muted"><IconChevron /></span>
-          </button>
 
           {/* Live status */}
           <div className="flex items-center gap-1.5 text-xs font-medium text-ink-soft px-1">
