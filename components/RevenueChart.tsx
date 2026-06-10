@@ -1,6 +1,6 @@
 'use client';
 
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, ReferenceLine } from 'recharts';
 
 interface Point {
   month: string;
@@ -11,7 +11,24 @@ interface Point {
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(n);
 
-export default function RevenueChart({ data }: { data: Point[] }) {
+// Renders an emphasized dot only on the currently-selected period; invisible elsewhere.
+function makeActiveDot(color: string, active: string) {
+  const Dot = (props: { cx?: number; cy?: number; index?: number; payload?: Point }) => {
+    const { cx, cy, index, payload } = props;
+    if (cx == null || cy == null || !payload || payload.month !== active) {
+      return <circle key={index} cx={cx} cy={cy} r={0} fill="none" />;
+    }
+    return (
+      <g key={index}>
+        <circle cx={cx} cy={cy} r={8} fill={color} fillOpacity={0.16} />
+        <circle cx={cx} cy={cy} r={4.5} fill={color} stroke="#fff" strokeWidth={2} />
+      </g>
+    );
+  };
+  return Dot;
+}
+
+export default function RevenueChart({ data, activePeriod }: { data: Point[]; activePeriod?: string }) {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <AreaChart data={data} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
@@ -40,8 +57,9 @@ export default function RevenueChart({ data }: { data: Point[] }) {
           cursor={{ stroke: '#E2E8F0' }}
         />
         <Legend wrapperStyle={{ fontSize: 12, color: '#64748B', paddingTop: 8 }} iconType="circle" />
-        <Area type="monotone" dataKey="revenue" name="Payments Collected" stroke="#5B8DEF" strokeWidth={2.5} fill="url(#rev)" dot={false} activeDot={{ r: 4 }} />
-        <Area type="monotone" dataKey="converted" name="Quotes Converted $" stroke="#FF6B4A" strokeWidth={2.5} fill="url(#conv)" dot={false} activeDot={{ r: 4 }} />
+        {activePeriod ? <ReferenceLine x={activePeriod} stroke="#CBD5E1" strokeDasharray="4 4" /> : null}
+        <Area type="monotone" dataKey="revenue" name="Payments Collected" stroke="#5B8DEF" strokeWidth={2.5} fill="url(#rev)" dot={makeActiveDot('#5B8DEF', activePeriod || '')} activeDot={{ r: 4 }} />
+        <Area type="monotone" dataKey="converted" name="Quotes Converted $" stroke="#FF6B4A" strokeWidth={2.5} fill="url(#conv)" dot={makeActiveDot('#FF6B4A', activePeriod || '')} activeDot={{ r: 4 }} />
       </AreaChart>
     </ResponsiveContainer>
   );

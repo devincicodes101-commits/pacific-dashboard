@@ -188,7 +188,7 @@ export default function Dashboard() {
               {/* Trend — full width */}
               <section id="trend" className="rounded-xl2 bg-surface border border-line shadow-card p-6 scroll-mt-24">
                 <h2 className="text-sm font-bold text-ink mb-5">{mode === 'week' ? 'Weekly Trend' : 'Revenue Trend'}</h2>
-                <RevenueChart data={chartData} />
+                <RevenueChart data={chartData} activePeriod={period} />
               </section>
 
               {/* By Salesperson — its own full-width box */}
