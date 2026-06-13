@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "rule": { "interval": [ { "field": "hours", "hoursInterval": 1 } ] }
+        "rule": { "interval": [ { "field": "minutes", "minutesInterval": 30 } ] }
       },
       "id": "schedule-trigger",
       "name": "Schedule Trigger",
