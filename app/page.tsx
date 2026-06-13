@@ -106,6 +106,16 @@ export default function Dashboard() {
     const max = Math.max(...dataPeriods.map((p) => m[p] ?? 0), 1);
     return ((m[period] ?? 0) / max) * 100;
   };
+  // % change vs the previous period (for the trend chip on KPI cards).
+  const deltaPct = (m: MonthMap | undefined) => {
+    if (!m) return null;
+    const i = dataPeriods.indexOf(period);
+    if (i <= 0) return null;
+    const cur = m[period] ?? 0;
+    const prev = m[dataPeriods[i - 1]] ?? 0;
+    if (!prev) return null;
+    return Math.round(((cur - prev) / prev) * 1000) / 10;
+  };
 
   const tableRows = view
     ? Object.keys(view.quotesSent.byPerson)
@@ -141,20 +151,20 @@ export default function Dashboard() {
           live={live}
         />
 
-        <main className="px-6 lg:px-8 py-8 max-w-[1500px] mx-auto">
+        <main className="px-8 lg:px-10 py-9 max-w-[1500px] mx-auto">
           {error && (
-            <div className="mb-6 bg-coral-soft border border-coral/30 text-coral-dark rounded-xl2 px-4 py-3 text-sm">{error}</div>
+            <div className="mb-6 bg-gold-soft border border-gold/30 text-ink rounded-xl2 px-4 py-3 text-sm">{error}</div>
           )}
 
           {loading ? (
             <div className="flex items-center justify-center h-64 text-ink-muted">Loading…</div>
           ) : view && period ? (
-            <div className="space-y-8">
+            <div className="space-y-10">
               {/* Finance */}
               <section>
                 <SectionLabel>Finance</SectionLabel>
                 <div className="grid grid-cols-1">
-                  <KpiCard label="Payments Collected" value={fmtCurrency(v(view.revenueProduced))} icon={<IconRevenue />} accent="#4FB286" trend={series(view.revenueProduced)} />
+                  <KpiCard label="Payments Collected" value={fmtCurrency(v(view.revenueProduced))} icon={<IconRevenue />} accent="#C8A97E" trend={series(view.revenueProduced)} delta={deltaPct(view.revenueProduced)} />
                 </div>
               </section>
 
@@ -162,10 +172,10 @@ export default function Dashboard() {
               <section>
                 <SectionLabel>Marketing</SectionLabel>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-                  <KpiCard label="New Leads" value={fmtNum(v(view.newLeads))} icon={<IconLeads />} accent="#5B8DEF" trend={series(view.newLeads)} />
-                  <KpiCard label="New Requests" value={fmtNum(v(view.newRequests))} icon={<IconRequests />} accent="#8B7FD6" trend={series(view.newRequests)} />
-                  <KpiCard label="Quotes Sent" value={fmtNum(v(view.quotesSent.total))} icon={<IconSent />} accent="#F5A623" trend={series(view.quotesSent.total)} />
-                  <KpiCard label="Quotes Converted" value={fmtNum(v(view.quotesConverted.total))} icon={<IconConverted />} accent="#4FB286" trend={series(view.quotesConverted.total)} />
+                  <KpiCard label="New Leads" value={fmtNum(v(view.newLeads))} icon={<IconLeads />} accent="#8A8F98" trend={series(view.newLeads)} delta={deltaPct(view.newLeads)} />
+                  <KpiCard label="New Requests" value={fmtNum(v(view.newRequests))} icon={<IconRequests />} accent="#9A8F86" trend={series(view.newRequests)} delta={deltaPct(view.newRequests)} />
+                  <KpiCard label="Quotes Sent" value={fmtNum(v(view.quotesSent.total))} icon={<IconSent />} accent="#C8A97E" trend={series(view.quotesSent.total)} delta={deltaPct(view.quotesSent.total)} />
+                  <KpiCard label="Quotes Converted" value={fmtNum(v(view.quotesConverted.total))} icon={<IconConverted />} accent="#7E9A7E" trend={series(view.quotesConverted.total)} delta={deltaPct(view.quotesConverted.total)} />
                 </div>
               </section>
 
@@ -177,32 +187,32 @@ export default function Dashboard() {
                     label="Conversion Rate"
                     centerValue={`${v(view.conversionRate.total).toFixed(1)}%`}
                     pct={Math.min(v(view.conversionRate.total), 100)}
-                    color="#5B8DEF"
+                    color="#C8A97E"
                   />
                   <RadialGauge
                     label="Quotes Converted $"
                     centerValue={fmtCompact(v(view.convertedDollars.total))}
                     pct={peakPct(view.convertedDollars.total)}
-                    color="#FF6B4A"
+                    color="#8A8F98"
                   />
                   <RadialGauge
                     label="Average Sale Value"
                     centerValue={fmtCompact(v(view.avgSale.total))}
                     pct={peakPct(view.avgSale.total)}
-                    color="#4FB286"
+                    color="#7E9A7E"
                   />
                 </div>
               </section>
 
               {/* Trend — full width */}
-              <section id="trend" className="rounded-xl2 bg-surface border border-line shadow-card p-6 scroll-mt-24">
-                <h2 className="text-sm font-bold text-ink mb-5">{mode === 'week' ? 'Weekly Trend' : 'Revenue Trend'}</h2>
+              <section id="trend" className="rounded-xl2 bg-surface border border-line shadow-card p-7 scroll-mt-24">
+                <h2 className="text-[15px] font-semibold text-ink tracking-tight mb-5">{mode === 'week' ? 'Weekly Trend' : 'Revenue Trend'}</h2>
                 <RevenueChart data={chartData} activePeriod={period} />
               </section>
 
               {/* By Salesperson — its own full-width box */}
-              <section id="salespeople" className="rounded-xl2 bg-surface border border-line shadow-card p-6 scroll-mt-24">
-                <h2 className="text-sm font-bold text-ink mb-5">By Salesperson — {period}</h2>
+              <section id="salespeople" className="rounded-xl2 bg-surface border border-line shadow-card p-7 scroll-mt-24">
+                <h2 className="text-[15px] font-semibold text-ink tracking-tight mb-5">By Salesperson — {period}</h2>
                 <SalespersonTable rows={tableRows} />
               </section>
 
@@ -221,9 +231,9 @@ export default function Dashboard() {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 mb-4">
-      <span className="w-1 h-3.5 rounded-full bg-coral" />
-      <h2 className="text-[11px] font-semibold uppercase tracking-widest text-ink-soft">{children}</h2>
+    <div className="flex items-center gap-2.5 mb-5">
+      <span className="w-1 h-3.5 rounded-full bg-gold" />
+      <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{children}</h2>
     </div>
   );
 }

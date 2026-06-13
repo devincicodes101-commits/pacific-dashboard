@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-const base = { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+const base = { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
 
 const IconGrid = () => (<svg {...base}><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>);
 const IconChart = () => (<svg {...base}><path d="M3 3v18h18" /><path d="M7 14l4-4 3 3 5-6" /></svg>);
@@ -31,15 +31,15 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 shrink-0 h-screen sticky top-0 bg-navy border-r border-navy-border px-5 py-6">
+    <aside className="hidden lg:flex flex-col w-64 shrink-0 h-screen sticky top-0 bg-surface border-r border-line px-5 py-7">
       {/* Brand */}
-      <div className="flex items-center gap-3 px-1 mb-9">
-        <div className="w-9 h-9 rounded-xl bg-coral flex items-center justify-center text-white font-extrabold text-sm shadow-lg shadow-coral/20">
+      <div className="flex items-center gap-3 px-1 mb-10">
+        <div className="w-9 h-9 rounded-xl bg-gold flex items-center justify-center text-white font-bold text-sm">
           P
         </div>
         <div className="leading-tight">
-          <p className="text-sm font-bold text-white">Pacific</p>
-          <p className="text-[11px] text-slate-400">Heat Pumps</p>
+          <p className="text-sm font-semibold text-ink tracking-tight">Pacific</p>
+          <p className="text-[11px] text-ink-muted">Heat Pumps</p>
         </div>
       </div>
 
@@ -51,11 +51,11 @@ export default function Sidebar() {
             <button
               key={item.key}
               onClick={() => go(item.key, item.target)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                isActive ? 'bg-coral text-white shadow-lg shadow-coral/20' : 'text-slate-300 hover:text-white hover:bg-navy-light'
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${
+                isActive ? 'bg-gold-soft text-ink font-semibold' : 'text-ink-soft hover:text-ink hover:bg-canvas font-medium'
               }`}
             >
-              <span className={isActive ? 'text-white' : 'text-slate-500'}>{item.icon}</span>
+              <span className={isActive ? 'text-gold' : 'text-ink-muted'}>{item.icon}</span>
               {item.label}
             </button>
           );
@@ -63,26 +63,26 @@ export default function Sidebar() {
       </nav>
 
       {/* Data sources */}
-      <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mt-9 mb-3 px-3">Data Sources</p>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted mt-10 mb-3 px-3">Data Sources</p>
       <ul className="flex flex-col gap-1">
         {SOURCES.map((s) => (
-          <li key={s} className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 cursor-default">
-            <span className="w-1.5 h-1.5 rounded-full bg-tint-sage" />
+          <li key={s} className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink-soft cursor-default">
+            <span className="w-1.5 h-1.5 rounded-full bg-gold" />
             {s}
           </li>
         ))}
       </ul>
 
       {/* Footer status */}
-      <div className="mt-auto rounded-xl2 border border-navy-border bg-navy-light p-4">
+      <div className="mt-auto rounded-xl2 border border-line bg-canvas p-4">
         <div className="flex items-center gap-2 mb-1.5">
           <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-tint-sage opacity-60 animate-ping" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-tint-sage" />
+            <span className="absolute inline-flex h-full w-full rounded-full bg-gold opacity-50 animate-ping" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-gold" />
           </span>
-          <p className="text-xs text-white font-semibold">Live sync active</p>
+          <p className="text-xs text-ink font-semibold">Live sync active</p>
         </div>
-        <p className="text-[11px] text-slate-400 leading-snug">Data refreshes automatically from Jobber &amp; QuickBooks.</p>
+        <p className="text-[11px] text-ink-muted leading-snug">Data refreshes automatically from Jobber &amp; QuickBooks.</p>
       </div>
     </aside>
   );

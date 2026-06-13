@@ -62,7 +62,7 @@ export default function Topbar({ mode, setMode, weekAvailable, periods, activeCo
               <select
                 value={period}
                 onChange={(e) => setPeriod(e.target.value)}
-                className="rounded-xl border border-line bg-canvas px-3 py-2 text-sm font-medium text-ink focus:outline-none focus:border-coral/40 cursor-pointer"
+                className="rounded-xl border border-line bg-canvas px-3 py-2 text-sm font-medium text-ink focus:outline-none focus:border-gold/40 cursor-pointer"
               >
                 {periods.map((p, i) => (
                   <option key={p} value={p} disabled={i >= activeCount}>Week of {p}{i >= activeCount ? ' —' : ''}</option>
@@ -78,7 +78,7 @@ export default function Topbar({ mode, setMode, weekAvailable, periods, activeCo
                       onClick={() => !disabled && setPeriod(p)}
                       disabled={disabled}
                       className={`px-2.5 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                        period === p ? 'bg-coral text-white shadow-soft' : disabled ? 'text-ink-muted/40 cursor-not-allowed' : 'text-ink-soft hover:text-ink'
+                        period === p ? 'bg-gold text-white shadow-soft' : disabled ? 'text-ink-muted/40 cursor-not-allowed' : 'text-ink-soft hover:text-ink'
                       }`}
                     >
                       {p}
@@ -90,7 +90,7 @@ export default function Topbar({ mode, setMode, weekAvailable, periods, activeCo
           ) : null}
 
           {/* Search */}
-          <div className="hidden xl:flex items-center gap-2 rounded-xl border border-line bg-canvas px-3 py-2 text-ink-muted w-44 focus-within:border-coral/40 transition-colors">
+          <div className="hidden xl:flex items-center gap-2 rounded-xl border border-line bg-canvas px-3 py-2 text-ink-muted w-44 focus-within:border-gold/40 transition-colors">
             <IconSearch />
             <input
               placeholder="Search…"
@@ -100,18 +100,18 @@ export default function Topbar({ mode, setMode, weekAvailable, periods, activeCo
 
           {/* Live status */}
           <div className="flex items-center gap-1.5 text-xs font-medium text-ink-soft px-1">
-            <span className={`w-2 h-2 rounded-full ${live ? 'bg-tint-sage' : 'bg-ink-muted'}`} />
+            <span className={`w-2 h-2 rounded-full ${live ? 'bg-gold' : 'bg-ink-muted'}`} />
             <span className="hidden sm:inline">{live ? 'Live' : 'Auto'}</span>
           </div>
 
           {/* Bell */}
           <button className="relative w-9 h-9 rounded-xl border border-line bg-canvas flex items-center justify-center text-ink-soft hover:text-ink transition-colors">
             <IconBell />
-            <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-coral" />
+            <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-gold" />
           </button>
 
           {/* Profile */}
-          <div className="w-9 h-9 rounded-xl bg-coral flex items-center justify-center text-white text-sm font-bold">
+          <div className="w-9 h-9 rounded-xl bg-gold flex items-center justify-center text-white text-sm font-bold">
             PH
           </div>
         </div>

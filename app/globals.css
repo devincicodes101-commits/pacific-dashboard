@@ -7,15 +7,16 @@
 }
 
 body {
-  background-color: #F4F6F8;
-  color: #1E293B;
+  background-color: #F8F6F2;
+  color: #2D2D2D;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  letter-spacing: -0.011em;
 }
 
-/* Light, restrained scrollbars */
+/* Quiet, refined scrollbars */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 8px; border: 2px solid #F4F6F8; }
-::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
+::-webkit-scrollbar-thumb { background: #E3DDD2; border-radius: 8px; border: 2px solid #F8F6F2; }
+::-webkit-scrollbar-thumb:hover { background: #D4CCBD; }
