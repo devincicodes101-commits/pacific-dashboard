@@ -32,6 +32,8 @@ interface DashboardData extends ViewBlock {
   months: string[];
   weeks?: string[];
   weekly?: ViewBlock;
+  currentMonth?: string;
+  currentWeek?: string;
   _source?: string;
   _syncedAt?: string;
 }
@@ -52,12 +54,12 @@ export default function Dashboard() {
   const [live, setLive] = useState(false);
 
   const loadKpis = () => {
-    fetch('/api/kpis')
+    fetch('/api/kpis', { cache: 'no-store' })
       .then((r) => r.json())
       .then((d) => {
         if (d.error) throw new Error(d.error);
         setData(d);
-        if (d.months?.length) setPeriod((prev) => prev || d.months[d.months.length - 1]);
+        if (d.months?.length) setPeriod((prev) => prev || d.currentMonth || d.months[d.months.length - 1]);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -79,23 +81,29 @@ export default function Dashboard() {
     };
   }, []);
 
-  // Which period labels + metric block are active for the chosen mode.
+  // Full period list shown in the header (e.g. all 12 months), and the
+  // "to-date" slice that actually has content (chart/sparklines stop there).
   const periods: string[] = (mode === 'week' ? data?.weeks : data?.months) ?? [];
   const view: ViewBlock | null = data ? (mode === 'week' && data.weekly ? data.weekly : data) : null;
   const weekAvailable = !!data?.weeks?.length && !!data?.weekly;
+
+  const currentPeriod = (mode === 'week' ? data?.currentWeek : data?.currentMonth) ?? (periods.length ? periods[periods.length - 1] : '');
+  const cutoff = periods.indexOf(currentPeriod);
+  const dataPeriods = cutoff >= 0 ? periods.slice(0, cutoff + 1) : periods;
 
   const changeMode = (m: Mode) => {
     if (m === mode) return;
     setMode(m);
     const ps = (m === 'week' ? data?.weeks : data?.months) ?? [];
-    setPeriod(ps[ps.length - 1] ?? '');
+    const cur = (m === 'week' ? data?.currentWeek : data?.currentMonth);
+    setPeriod(cur && ps.includes(cur) ? cur : (ps[ps.length - 1] ?? ''));
   };
 
   const v = (m: MonthMap | undefined) => (m && period ? m[period] ?? 0 : 0);
-  const series = (m: MonthMap | undefined) => (m ? periods.map((p) => m[p] ?? 0) : []);
+  const series = (m: MonthMap | undefined) => (m ? dataPeriods.map((p) => m[p] ?? 0) : []);
   const peakPct = (m: MonthMap | undefined) => {
-    if (!m || !periods.length) return 0;
-    const max = Math.max(...periods.map((p) => m[p] ?? 0), 1);
+    if (!m || !dataPeriods.length) return 0;
+    const max = Math.max(...dataPeriods.map((p) => m[p] ?? 0), 1);
     return ((m[period] ?? 0) / max) * 100;
   };
 
@@ -114,7 +122,7 @@ export default function Dashboard() {
     : [];
 
   const chartData = view
-    ? periods.map((p) => ({ month: p, revenue: view.revenueProduced[p] ?? 0, converted: view.convertedDollars.total[p] ?? 0 }))
+    ? dataPeriods.map((p) => ({ month: p, revenue: view.revenueProduced[p] ?? 0, converted: view.convertedDollars.total[p] ?? 0 }))
     : [];
 
   return (
@@ -127,6 +135,7 @@ export default function Dashboard() {
           setMode={changeMode}
           weekAvailable={weekAvailable}
           periods={periods}
+          activeCount={dataPeriods.length}
           period={period}
           setPeriod={setPeriod}
           live={live}

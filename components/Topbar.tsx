@@ -7,6 +7,7 @@ interface TopbarProps {
   setMode: (m: Mode) => void;
   weekAvailable: boolean;
   periods: string[];
+  activeCount: number; // how many leading periods have data (rest are future, greyed)
   period: string;
   setPeriod: (p: string) => void;
   live: boolean;
@@ -23,7 +24,7 @@ const IconBell = () => (
   </svg>
 );
 
-export default function Topbar({ mode, setMode, weekAvailable, periods, period, setPeriod, live }: TopbarProps) {
+export default function Topbar({ mode, setMode, weekAvailable, periods, activeCount, period, setPeriod, live }: TopbarProps) {
   return (
     <header className="sticky top-0 z-20 bg-surface border-b border-line">
       <div className="px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
@@ -63,23 +64,27 @@ export default function Topbar({ mode, setMode, weekAvailable, periods, period, 
                 onChange={(e) => setPeriod(e.target.value)}
                 className="rounded-xl border border-line bg-canvas px-3 py-2 text-sm font-medium text-ink focus:outline-none focus:border-coral/40 cursor-pointer"
               >
-                {periods.map((p) => (
-                  <option key={p} value={p}>Week of {p}</option>
+                {periods.map((p, i) => (
+                  <option key={p} value={p} disabled={i >= activeCount}>Week of {p}{i >= activeCount ? ' —' : ''}</option>
                 ))}
               </select>
             ) : (
               <div className="hidden md:flex rounded-xl border border-line bg-canvas p-0.5 gap-0.5">
-                {periods.map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPeriod(p)}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                      period === p ? 'bg-coral text-white shadow-soft' : 'text-ink-soft hover:text-ink'
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ))}
+                {periods.map((p, i) => {
+                  const disabled = i >= activeCount;
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => !disabled && setPeriod(p)}
+                      disabled={disabled}
+                      className={`px-2.5 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                        period === p ? 'bg-coral text-white shadow-soft' : disabled ? 'text-ink-muted/40 cursor-not-allowed' : 'text-ink-soft hover:text-ink'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
               </div>
             )
           ) : null}
