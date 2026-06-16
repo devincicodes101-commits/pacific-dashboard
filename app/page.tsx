@@ -7,6 +7,7 @@ import KpiCard from '@/components/KpiCard';
 import RadialGauge from '@/components/RadialGauge';
 import SalespersonTable from '@/components/SalespersonTable';
 import RevenueChart from '@/components/RevenueChart';
+import DepartmentCard from '@/components/DepartmentCard';
 import { supabase } from '@/lib/supabase';
 import {
   IconRevenue, IconLeads, IconRequests,
@@ -15,6 +16,7 @@ import {
 
 interface MonthMap { [m: string]: number }
 interface Grouped { total: MonthMap; byPerson: Record<string, MonthMap> }
+interface DeptMetrics { revenue: MonthMap; jobsCompleted: MonthMap; avgTicket: MonthMap }
 
 interface ViewBlock {
   revenueProduced: MonthMap;
@@ -26,6 +28,11 @@ interface ViewBlock {
   conversionRate: Grouped;
   convertedDollars: Grouped;
   avgSale: Grouped;
+  departments?: {
+    installations?: DeptMetrics;
+    service?: DeptMetrics;
+    maintenance?: DeptMetrics;
+  };
 }
 
 interface DashboardData extends ViewBlock {
@@ -204,6 +211,30 @@ export default function Dashboard() {
                 </div>
               </section>
 
+              {/* Departments — Installations / Service from one-off jobs (job-type custom field) */}
+              <section id="departments" className="scroll-mt-24">
+                <SectionLabel>Departments</SectionLabel>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <DepartmentCard
+                    name="HVAC Installations"
+                    icon={<IconInstall />}
+                    accent="#C8A97E"
+                    revenue={v(view.departments?.installations?.revenue)}
+                    jobs={v(view.departments?.installations?.jobsCompleted)}
+                    avgTicket={v(view.departments?.installations?.avgTicket)}
+                  />
+                  <DepartmentCard
+                    name="HVAC Service"
+                    icon={<IconService />}
+                    accent="#8A8F98"
+                    revenue={v(view.departments?.service?.revenue)}
+                    jobs={v(view.departments?.service?.jobsCompleted)}
+                    avgTicket={v(view.departments?.service?.avgTicket)}
+                  />
+                  <DepartmentCard name="HVAC Maintenance" pending pendingNote="Recurring — next" revenue={0} jobs={0} avgTicket={0} />
+                </div>
+              </section>
+
               {/* Trend — full width */}
               <section id="trend" className="rounded-xl2 bg-surface border border-line shadow-card p-7 scroll-mt-24">
                 <h2 className="text-[15px] font-semibold text-ink tracking-tight mb-5">{mode === 'week' ? 'Weekly Trend' : 'Revenue Trend'}</h2>
@@ -228,6 +259,10 @@ export default function Dashboard() {
     </div>
   );
 }
+
+const deptIconBase = { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+const IconInstall = () => (<svg {...deptIconBase}><path d="M3 9.5 12 4l9 5.5" /><path d="M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9" /><path d="M9 20v-6h6v6" /></svg>);
+const IconService = () => (<svg {...deptIconBase}><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2-2 2.4-2.4Z" /></svg>);
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
