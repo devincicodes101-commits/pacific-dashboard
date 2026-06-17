@@ -9,6 +9,7 @@ interface DepartmentCardProps {
   accent?: string;
   pending?: boolean;     // not yet wired (e.g. Maintenance)
   pendingNote?: string;
+  note?: string;         // small footnote explaining the data rule (e.g. clean-start)
 }
 
 const fmtCurrency = (n: number) =>
@@ -24,7 +25,7 @@ function Row({ label, value, dim }: { label: string; value: string; dim?: boolea
   );
 }
 
-export default function DepartmentCard({ name, icon, revenue, jobs, avgTicket, accent = '#C8A97E', pending, pendingNote }: DepartmentCardProps) {
+export default function DepartmentCard({ name, icon, revenue, jobs, avgTicket, accent = '#C8A97E', pending, pendingNote, note }: DepartmentCardProps) {
   return (
     <div className="rounded-xl2 bg-surface border border-line shadow-card transition-shadow hover:shadow-lift p-6">
       <div className="flex items-center justify-between mb-5">
@@ -44,6 +45,9 @@ export default function DepartmentCard({ name, icon, revenue, jobs, avgTicket, a
         <Row label="Jobs Completed" value={pending ? '—' : fmtNum(jobs)} dim={pending} />
         <Row label="Avg Ticket" value={pending ? '—' : fmtCurrency(avgTicket)} dim={pending} />
       </div>
+      {note ? (
+        <p className="mt-4 pt-3 border-t border-line text-[11px] leading-snug text-ink-muted">{note}</p>
+      ) : null}
     </div>
   );
 }
