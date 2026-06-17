@@ -232,7 +232,14 @@ export default function Dashboard() {
                     jobs={v(view.departments?.service?.jobsCompleted)}
                     avgTicket={v(view.departments?.service?.avgTicket)}
                   />
-                  <DepartmentCard name="HVAC Maintenance" pending pendingNote="Recurring — next" revenue={0} jobs={0} avgTicket={0} />
+                  <DepartmentCard
+                    name="HVAC Maintenance"
+                    icon={<IconMaintenance />}
+                    accent="#7E9A7E"
+                    revenue={v(view.departments?.maintenance?.revenue)}
+                    jobs={v(view.departments?.maintenance?.jobsCompleted)}
+                    avgTicket={v(view.departments?.maintenance?.avgTicket)}
+                  />
                 </div>
               </section>
 
@@ -264,6 +271,7 @@ export default function Dashboard() {
 const deptIconBase = { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.9, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
 const IconInstall = () => (<svg {...deptIconBase}><path d="M3 9.5 12 4l9 5.5" /><path d="M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9" /><path d="M9 20v-6h6v6" /></svg>);
 const IconService = () => (<svg {...deptIconBase}><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2-2 2.4-2.4Z" /></svg>);
+const IconMaintenance = () => (<svg {...deptIconBase}><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v4h-4" /></svg>);
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
