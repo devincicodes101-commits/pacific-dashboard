@@ -223,7 +223,7 @@ export default function Dashboard() {
                     revenue={v(view.departments?.installations?.revenue)}
                     jobs={v(view.departments?.installations?.jobsCompleted)}
                     avgTicket={v(view.departments?.installations?.avgTicket)}
-                    note="Counts jobs tagged with Type of Job & completed from Jun 16 onward — per spec (no backfill)."
+                    note="Per spec: jobs created from Jun 16 onward & tagged with Type of Job — counted when completed (no backfill)."
                   />
                   <DepartmentCard
                     name="HVAC Service"
@@ -232,7 +232,7 @@ export default function Dashboard() {
                     revenue={v(view.departments?.service?.revenue)}
                     jobs={v(view.departments?.service?.jobsCompleted)}
                     avgTicket={v(view.departments?.service?.avgTicket)}
-                    note="Counts jobs tagged with Type of Job & completed from Jun 16 onward — per spec (no backfill)."
+                    note="Per spec: jobs created from Jun 16 onward & tagged with Type of Job — counted when completed (no backfill)."
                   />
                   <DepartmentCard
                     name="HVAC Maintenance"
