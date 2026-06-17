@@ -214,6 +214,7 @@ export default function Dashboard() {
               {/* Departments — Installations / Service from one-off jobs (job-type custom field) */}
               <section id="departments" className="scroll-mt-24">
                 <SectionLabel>Departments</SectionLabel>
+                <p className="text-xs text-ink-muted -mt-3 mb-4">Tracked from Jun 16, 2026 onward · earlier periods aren&apos;t backfilled.</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                   <DepartmentCard
                     name="HVAC Installations"
