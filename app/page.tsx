@@ -11,7 +11,7 @@ import DepartmentCard from '@/components/DepartmentCard';
 import { supabase } from '@/lib/supabase';
 import {
   IconRevenue, IconLeads, IconRequests,
-  IconSent, IconConverted, IconDollars,
+  IconSent, IconConverted, IconDollars, IconCash, IconRate,
 } from '@/components/icons';
 
 interface MonthMap { [m: string]: number }
@@ -21,6 +21,7 @@ interface DeptMetrics { revenue: MonthMap; jobsCompleted: MonthMap; avgTicket: M
 interface ViewBlock {
   revenueProduced: MonthMap;
   invoicesIssued: MonthMap;
+  invoiceCount: MonthMap;
   cashCollected: MonthMap;
   newLeads: MonthMap;
   newRequests: MonthMap;
@@ -42,6 +43,7 @@ interface DashboardData extends ViewBlock {
   weekly?: ViewBlock;
   currentMonth?: string;
   currentWeek?: string;
+  receivables?: { total: number; over30: number; over30Pct: number };
   _source?: string;
   _syncedAt?: string;
 }
@@ -174,6 +176,17 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                   <KpiCard label="Total Revenue" value={fmtCurrency(v(view.invoicesIssued))} icon={<IconDollars />} accent="#7E9A7E" trend={series(view.invoicesIssued)} delta={deltaPct(view.invoicesIssued)} />
                   <KpiCard label="Payments Collected" value={fmtCurrency(v(view.revenueProduced))} icon={<IconRevenue />} accent="#C8A97E" trend={series(view.revenueProduced)} delta={deltaPct(view.revenueProduced)} />
+                </div>
+              </section>
+
+              {/* Receivables — invoice count is per-period; AR is a current snapshot (same across periods). */}
+              <section>
+                <SectionLabel>Receivables</SectionLabel>
+                <p className="text-xs text-ink-muted -mt-3 mb-4">Invoices issued is per period · A/R figures are the current outstanding balance as of the last sync.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  <KpiCard label="Invoices Issued" value={fmtNum(v(view.invoiceCount))} icon={<IconRequests />} accent="#9A8F86" trend={series(view.invoiceCount)} delta={deltaPct(view.invoiceCount)} />
+                  <KpiCard label="Accounts Receivable" value={fmtCurrency(data?.receivables?.total ?? 0)} icon={<IconCash />} accent="#8A8F98" />
+                  <KpiCard label="A/R Over 30 Days" value={`${(data?.receivables?.over30Pct ?? 0).toFixed(1)}%`} icon={<IconRate />} accent="#BC8A78" />
                 </div>
               </section>
 
