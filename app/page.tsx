@@ -11,7 +11,7 @@ import DepartmentCard from '@/components/DepartmentCard';
 import { supabase } from '@/lib/supabase';
 import {
   IconRevenue, IconLeads, IconRequests,
-  IconSent, IconConverted, IconDollars, IconCash, IconRate,
+  IconSent, IconConverted, IconDollars, IconCash, IconRate, IconAvg,
 } from '@/components/icons';
 
 interface MonthMap { [m: string]: number }
@@ -25,6 +25,9 @@ interface ViewBlock {
   cashCollected: MonthMap;
   newLeads: MonthMap;
   newRequests: MonthMap;
+  newJobs?: MonthMap;
+  jobRevenue?: MonthMap;
+  avgJobSize?: MonthMap;
   quotesSent: Grouped;
   quotesConverted: Grouped;
   conversionRate: Grouped;
@@ -223,6 +226,17 @@ export default function Dashboard() {
                     pct={peakPct(view.avgSale.total)}
                     color="#7E9A7E"
                   />
+                </div>
+              </section>
+
+              {/* Operations — one-off job volume & value (all jobs, by created date) */}
+              <section>
+                <SectionLabel>Operations</SectionLabel>
+                <p className="text-xs text-ink-muted -mt-3 mb-4">One-off jobs by created date — new jobs booked, their total value, and average size.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  <KpiCard label="New One-Off Jobs" value={fmtNum(v(view.newJobs))} icon={<IconRequests />} accent="#8A8F98" trend={series(view.newJobs)} delta={deltaPct(view.newJobs)} />
+                  <KpiCard label="Job Revenue" value={fmtCurrency(v(view.jobRevenue))} icon={<IconDollars />} accent="#C8A97E" trend={series(view.jobRevenue)} delta={deltaPct(view.jobRevenue)} />
+                  <KpiCard label="Avg Job Size" value={fmtCurrency(v(view.avgJobSize))} icon={<IconAvg />} accent="#7E9A7E" trend={series(view.avgJobSize)} delta={deltaPct(view.avgJobSize)} />
                 </div>
               </section>
 
