@@ -11,7 +11,7 @@ import DepartmentCard from '@/components/DepartmentCard';
 import { supabase } from '@/lib/supabase';
 import {
   IconRevenue, IconLeads, IconRequests,
-  IconSent, IconConverted,
+  IconSent, IconConverted, IconDollars,
 } from '@/components/icons';
 
 interface MonthMap { [m: string]: number }
@@ -20,6 +20,7 @@ interface DeptMetrics { revenue: MonthMap; jobsCompleted: MonthMap; avgTicket: M
 
 interface ViewBlock {
   revenueProduced: MonthMap;
+  invoicesIssued: MonthMap;
   cashCollected: MonthMap;
   newLeads: MonthMap;
   newRequests: MonthMap;
@@ -170,7 +171,8 @@ export default function Dashboard() {
               {/* Finance */}
               <section>
                 <SectionLabel>Finance</SectionLabel>
-                <div className="grid grid-cols-1">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                  <KpiCard label="Total Revenue" value={fmtCurrency(v(view.invoicesIssued))} icon={<IconDollars />} accent="#7E9A7E" trend={series(view.invoicesIssued)} delta={deltaPct(view.invoicesIssued)} />
                   <KpiCard label="Payments Collected" value={fmtCurrency(v(view.revenueProduced))} icon={<IconRevenue />} accent="#C8A97E" trend={series(view.revenueProduced)} delta={deltaPct(view.revenueProduced)} />
                 </div>
               </section>
