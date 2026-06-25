@@ -182,7 +182,7 @@ export default function Dashboard() {
               {/* Receivables — invoice count is per-period; AR is a current snapshot (same across periods). */}
               <section>
                 <SectionLabel>Receivables</SectionLabel>
-                <p className="text-xs text-ink-muted -mt-3 mb-4">Invoices issued is per period · A/R figures are the current outstanding balance as of the last sync.</p>
+                <p className="text-xs text-ink-muted -mt-3 mb-4">Invoices issued is per period · A/R = overdue invoice balances (matches Jobber&apos;s Aged Receivables), aged by due date.</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                   <KpiCard label="Invoices Issued" value={fmtNum(v(view.invoiceCount))} icon={<IconRequests />} accent="#9A8F86" trend={series(view.invoiceCount)} delta={deltaPct(view.invoiceCount)} />
                   <KpiCard label="Accounts Receivable" value={fmtCurrency(data?.receivables?.total ?? 0)} icon={<IconCash />} accent="#8A8F98" />
