@@ -198,7 +198,7 @@
         "headerParameters": { "parameters": [ { "name": "X-JOBBER-GRAPHQL-VERSION", "value": "2025-04-16" } ] },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ query: \"query GetJobs($cursor: String, $filter: JobFilterAttributes) { jobs(first: 50, after: $cursor, filter: $filter) { nodes { id jobNumber jobType jobStatus createdAt startAt completedAt total jobCosting { totalRevenue } lineItems(first: 20) { nodes { totalPrice } } customFields { __typename ... on CustomFieldDropdown { label valueDropdown } } } pageInfo { endCursor hasNextPage } } }\", variables: { cursor: $json.cursor || null, filter: { jobType: \"ONE_OFF\", createdAt: { after: \"2025-09-01T00:00:00Z\" } } } }) }}",
+        "jsonBody": "={{ JSON.stringify({ query: \"query GetJobs($cursor: String, $filter: JobFilterAttributes) { jobs(first: 50, after: $cursor, filter: $filter) { nodes { id jobNumber jobType jobStatus createdAt startAt completedAt total jobCosting { totalRevenue } lineItems(first: 50) { nodes { totalPrice } } customFields { __typename ... on CustomFieldDropdown { label valueDropdown } } } pageInfo { endCursor hasNextPage } } }\", variables: { cursor: $json.cursor || null, filter: { jobType: \"ONE_OFF\", createdAt: { after: \"2025-01-01T00:00:00Z\" } } } }) }}",
         "options": {}
       },
       "id": "jobs-page",
