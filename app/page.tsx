@@ -232,7 +232,7 @@ export default function Dashboard() {
               {/* Operations — one-off job volume & value (all jobs, by created date) */}
               <section>
                 <SectionLabel>Operations</SectionLabel>
-                <p className="text-xs text-ink-muted -mt-3 mb-4">One-off jobs by created date — new jobs booked, their total value, and average size.</p>
+                <p className="text-xs text-ink-muted -mt-3 mb-4">New jobs by created date · Job Revenue = Jobber&apos;s &quot;Job revenue&quot; (line items, pre-tax, by job start date).</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                   <KpiCard label="New One-Off Jobs" value={fmtNum(v(view.newJobs))} icon={<IconRequests />} accent="#8A8F98" trend={series(view.newJobs)} delta={deltaPct(view.newJobs)} />
                   <KpiCard label="Job Revenue" value={fmtCurrency(v(view.jobRevenue))} icon={<IconDollars />} accent="#C8A97E" trend={series(view.jobRevenue)} delta={deltaPct(view.jobRevenue)} />
