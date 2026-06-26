@@ -28,6 +28,8 @@ interface ViewBlock {
   newJobs?: MonthMap;
   jobRevenue?: MonthMap;
   avgJobSize?: MonthMap;
+  labourHours?: MonthMap;
+  revenuePerHour?: MonthMap;
   quotesSent: Grouped;
   quotesConverted: Grouped;
   conversionRate: Grouped;
@@ -237,6 +239,16 @@ export default function Dashboard() {
                   <KpiCard label="New One-Off Jobs" value={fmtNum(v(view.newJobs))} icon={<IconRequests />} accent="#8A8F98" trend={series(view.newJobs)} delta={deltaPct(view.newJobs)} />
                   <KpiCard label="Job Revenue" value={fmtCurrency(v(view.jobRevenue))} icon={<IconDollars />} accent="#C8A97E" trend={series(view.jobRevenue)} delta={deltaPct(view.jobRevenue)} />
                   <KpiCard label="Avg Job Size" value={fmtCurrency(v(view.avgJobSize))} icon={<IconAvg />} accent="#7E9A7E" trend={series(view.avgJobSize)} delta={deltaPct(view.avgJobSize)} />
+                </div>
+              </section>
+
+              {/* Labour — company-wide hours (Jobber timesheets) + revenue efficiency */}
+              <section>
+                <SectionLabel>Labour</SectionLabel>
+                <p className="text-xs text-ink-muted -mt-3 mb-4">Total hours from Jobber timesheets (whole team, by date worked) · Revenue per Hour = Job Revenue ÷ hours.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <KpiCard label="Total Labour Hours" value={`${fmtNum(v(view.labourHours))} h`} icon={<IconAvg />} accent="#8A8F98" trend={series(view.labourHours)} delta={deltaPct(view.labourHours)} />
+                  <KpiCard label="Revenue Per Hour" value={fmtCurrency(v(view.revenuePerHour))} icon={<IconRevenue />} accent="#C8A97E" trend={series(view.revenuePerHour)} delta={deltaPct(view.revenuePerHour)} />
                 </div>
               </section>
 
