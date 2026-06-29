@@ -38,6 +38,7 @@ interface ViewBlock {
   departments?: {
     installations?: DeptMetrics;
     service?: DeptMetrics;
+    electrical?: DeptMetrics;
     maintenance?: DeptMetrics;
   };
 }
@@ -256,7 +257,7 @@ export default function Dashboard() {
               <section id="departments" className="scroll-mt-24">
                 <SectionLabel>Departments</SectionLabel>
                 <p className="text-xs text-ink-muted -mt-3 mb-4">Live from Jobber — updates automatically as jobs are completed.</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                   <DepartmentCard
                     name="HVAC Installations"
                     icon={<IconInstall />}
@@ -273,6 +274,15 @@ export default function Dashboard() {
                     revenue={v(view.departments?.service?.revenue)}
                     jobs={v(view.departments?.service?.jobsCompleted)}
                     avgTicket={v(view.departments?.service?.avgTicket)}
+                    note="Per spec: jobs created from Jun 16 onward & tagged with Type of Job — counted when completed (no backfill)."
+                  />
+                  <DepartmentCard
+                    name="HVAC Electrical"
+                    icon={<IconElectrical />}
+                    accent="#9A8F86"
+                    revenue={v(view.departments?.electrical?.revenue)}
+                    jobs={v(view.departments?.electrical?.jobsCompleted)}
+                    avgTicket={v(view.departments?.electrical?.avgTicket)}
                     note="Per spec: jobs created from Jun 16 onward & tagged with Type of Job — counted when completed (no backfill)."
                   />
                   <DepartmentCard
@@ -315,6 +325,7 @@ const deptIconBase = { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none'
 const IconInstall = () => (<svg {...deptIconBase}><path d="M3 9.5 12 4l9 5.5" /><path d="M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9" /><path d="M9 20v-6h6v6" /></svg>);
 const IconService = () => (<svg {...deptIconBase}><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2-2 2.4-2.4Z" /></svg>);
 const IconMaintenance = () => (<svg {...deptIconBase}><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v4h-4" /></svg>);
+const IconElectrical = () => (<svg {...deptIconBase}><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" /></svg>);
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
