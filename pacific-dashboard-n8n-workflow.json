@@ -242,7 +242,7 @@
         "headerParameters": { "parameters": [ { "name": "X-JOBBER-GRAPHQL-VERSION", "value": "2025-04-16" } ] },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ query: \"query GetRecurring($cursor: String, $filter: JobFilterAttributes) { jobs(first: 10, after: $cursor, filter: $filter) { nodes { id jobNumber jobType visits(first: 20) { nodes { id isComplete completedAt lineItems(first: 10) { nodes { totalPrice } } } } } pageInfo { endCursor hasNextPage } } }\", variables: { cursor: $json.cursor || null, filter: { jobType: \"RECURRING\" } } }) }}",
+        "jsonBody": "={{ JSON.stringify({ query: \"query GetRecurring($cursor: String, $filter: JobFilterAttributes) { jobs(first: 20, after: $cursor, filter: $filter) { nodes { id jobNumber jobType visits(first: 12) { nodes { id isComplete completedAt lineItems(first: 6) { nodes { totalPrice } } } } } pageInfo { endCursor hasNextPage } } }\", variables: { cursor: $json.cursor || null, filter: { jobType: \"RECURRING\" } } }) }}",
         "options": {}
       },
       "id": "recurring-page",
