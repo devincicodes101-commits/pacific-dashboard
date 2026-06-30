@@ -50,6 +50,18 @@ interface DashboardData extends ViewBlock {
   currentMonth?: string;
   currentWeek?: string;
   receivables?: { total: number; over30: number; over30Pct: number };
+  quickbooks?: {
+    cashInBank: number;
+    totalCC: number;
+    totalAP: number;
+    gst: number;
+    eht: number;
+    shLoan: number;
+    costOfLabour: number;
+    cashCollected: number;
+    labourHoursYtd: number;
+    labourCostPerHour: number;
+  };
   _source?: string;
   _syncedAt?: string;
 }
@@ -193,6 +205,23 @@ export default function Dashboard() {
                   <KpiCard label="Invoices Issued" value={fmtNum(v(view.invoiceCount))} icon={<IconRequests />} accent="#9A8F86" trend={series(view.invoiceCount)} delta={deltaPct(view.invoiceCount)} />
                   <KpiCard label="Accounts Receivable" value={fmtCurrency(data?.receivables?.total ?? 0)} icon={<IconCash />} accent="#8A8F98" />
                   <KpiCard label="A/R Over 30 Days" value={`${(data?.receivables?.over30Pct ?? 0).toFixed(1)}%`} icon={<IconRate />} accent="#BC8A78" />
+                </div>
+              </section>
+
+              {/* Accounting — live QuickBooks balances (snapshot; not affected by week/month toggle) */}
+              <section id="accounting" className="scroll-mt-24">
+                <SectionLabel>Accounting · QuickBooks</SectionLabel>
+                <p className="text-xs text-ink-muted -mt-3 mb-4">Live from QuickBooks — current account balances &amp; year-to-date totals. These are point-in-time snapshots, so they stay the same across the week/month toggle. Liabilities (A/P, GST, EHT, Shareholder Loan, Credit Cards) follow the balance-sheet sign convention.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  <KpiCard label="Cash in Bank" value={fmtCurrency(data?.quickbooks?.cashInBank ?? 0)} icon={<IconCash />} accent="#7E9A7E" />
+                  <KpiCard label="Accounts Payable" value={fmtCurrency(data?.quickbooks?.totalAP ?? 0)} icon={<IconDollars />} accent="#BC8A78" />
+                  <KpiCard label="Credit Cards" value={fmtCurrency(data?.quickbooks?.totalCC ?? 0)} icon={<IconDollars />} accent="#9A8F86" />
+                  <KpiCard label="GST Owing" value={fmtCurrency(data?.quickbooks?.gst ?? 0)} icon={<IconRate />} accent="#8A8F98" />
+                  <KpiCard label="EHT Payable" value={fmtCurrency(data?.quickbooks?.eht ?? 0)} icon={<IconRate />} accent="#8A8F98" />
+                  <KpiCard label="Shareholder Loan" value={fmtCurrency(data?.quickbooks?.shLoan ?? 0)} icon={<IconDollars />} accent="#9A8F86" />
+                  <KpiCard label="Cost of Labour (YTD)" value={fmtCurrency(data?.quickbooks?.costOfLabour ?? 0)} icon={<IconRevenue />} accent="#C8A97E" />
+                  <KpiCard label="Cash Collected (YTD)" value={fmtCurrency(data?.quickbooks?.cashCollected ?? 0)} icon={<IconCash />} accent="#7E9A7E" />
+                  <KpiCard label="Labour Cost / Hour" value={fmtCurrency(data?.quickbooks?.labourCostPerHour ?? 0)} icon={<IconAvg />} accent="#C8A97E" />
                 </div>
               </section>
 
