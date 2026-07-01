@@ -41,6 +41,17 @@ interface ViewBlock {
     electrical?: DeptMetrics;
     maintenance?: DeptMetrics;
   };
+  quickbooks?: {
+    cashInBank: MonthMap;
+    totalCC: MonthMap;
+    totalAP: MonthMap;
+    gst: MonthMap;
+    eht: MonthMap;
+    shLoan: MonthMap;
+    costOfLabour: MonthMap;
+    cashCollected: MonthMap;
+    labourCostPerHour: MonthMap;
+  };
 }
 
 interface DashboardData extends ViewBlock {
@@ -50,18 +61,6 @@ interface DashboardData extends ViewBlock {
   currentMonth?: string;
   currentWeek?: string;
   receivables?: { total: number; over30: number; over30Pct: number };
-  quickbooks?: {
-    cashInBank: number;
-    totalCC: number;
-    totalAP: number;
-    gst: number;
-    eht: number;
-    shLoan: number;
-    costOfLabour: number;
-    cashCollected: number;
-    labourHoursYtd: number;
-    labourCostPerHour: number;
-  };
   _source?: string;
   _syncedAt?: string;
 }
@@ -208,20 +207,20 @@ export default function Dashboard() {
                 </div>
               </section>
 
-              {/* Accounting — live QuickBooks balances (snapshot; not affected by week/month toggle) */}
+              {/* Accounting — QuickBooks. Balances = end-of-period (month/week-end); flows = per-period. Toggles like the rest of the dashboard. */}
               <section id="accounting" className="scroll-mt-24">
                 <SectionLabel>Accounting · QuickBooks</SectionLabel>
-                <p className="text-xs text-ink-muted -mt-3 mb-4">Live from QuickBooks — current account balances &amp; year-to-date totals. These are point-in-time snapshots, so they stay the same across the week/month toggle. Liabilities (A/P, GST, EHT, Shareholder Loan, Credit Cards) follow the balance-sheet sign convention.</p>
+                <p className="text-xs text-ink-muted -mt-3 mb-4">Live from QuickBooks. Balances (Cash, A/P, GST, EHT, Shareholder Loan, Credit Cards) are shown as of the end of the selected {mode === 'week' ? 'week' : 'month'}; Cost of Labour &amp; Cash Collected are the amount for that period. Liabilities follow the balance-sheet sign convention.</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                  <KpiCard label="Cash in Bank" value={fmtCurrency(data?.quickbooks?.cashInBank ?? 0)} icon={<IconCash />} accent="#7E9A7E" />
-                  <KpiCard label="Accounts Payable" value={fmtCurrency(data?.quickbooks?.totalAP ?? 0)} icon={<IconDollars />} accent="#BC8A78" />
-                  <KpiCard label="Credit Cards" value={fmtCurrency(data?.quickbooks?.totalCC ?? 0)} icon={<IconDollars />} accent="#9A8F86" />
-                  <KpiCard label="GST Owing" value={fmtCurrency(data?.quickbooks?.gst ?? 0)} icon={<IconRate />} accent="#8A8F98" />
-                  <KpiCard label="EHT Payable" value={fmtCurrency(data?.quickbooks?.eht ?? 0)} icon={<IconRate />} accent="#8A8F98" />
-                  <KpiCard label="Shareholder Loan" value={fmtCurrency(data?.quickbooks?.shLoan ?? 0)} icon={<IconDollars />} accent="#9A8F86" />
-                  <KpiCard label="Cost of Labour (YTD)" value={fmtCurrency(data?.quickbooks?.costOfLabour ?? 0)} icon={<IconRevenue />} accent="#C8A97E" />
-                  <KpiCard label="Cash Collected (YTD)" value={fmtCurrency(data?.quickbooks?.cashCollected ?? 0)} icon={<IconCash />} accent="#7E9A7E" />
-                  <KpiCard label="Labour Cost / Hour" value={fmtCurrency(data?.quickbooks?.labourCostPerHour ?? 0)} icon={<IconAvg />} accent="#C8A97E" />
+                  <KpiCard label="Cash in Bank" value={fmtCurrency(v(view.quickbooks?.cashInBank))} icon={<IconCash />} accent="#7E9A7E" trend={series(view.quickbooks?.cashInBank)} delta={deltaPct(view.quickbooks?.cashInBank)} />
+                  <KpiCard label="Accounts Payable" value={fmtCurrency(v(view.quickbooks?.totalAP))} icon={<IconDollars />} accent="#BC8A78" trend={series(view.quickbooks?.totalAP)} delta={deltaPct(view.quickbooks?.totalAP)} />
+                  <KpiCard label="Credit Cards" value={fmtCurrency(v(view.quickbooks?.totalCC))} icon={<IconDollars />} accent="#9A8F86" trend={series(view.quickbooks?.totalCC)} delta={deltaPct(view.quickbooks?.totalCC)} />
+                  <KpiCard label="GST Owing" value={fmtCurrency(v(view.quickbooks?.gst))} icon={<IconRate />} accent="#8A8F98" trend={series(view.quickbooks?.gst)} delta={deltaPct(view.quickbooks?.gst)} />
+                  <KpiCard label="EHT Payable" value={fmtCurrency(v(view.quickbooks?.eht))} icon={<IconRate />} accent="#8A8F98" trend={series(view.quickbooks?.eht)} delta={deltaPct(view.quickbooks?.eht)} />
+                  <KpiCard label="Shareholder Loan" value={fmtCurrency(v(view.quickbooks?.shLoan))} icon={<IconDollars />} accent="#9A8F86" trend={series(view.quickbooks?.shLoan)} delta={deltaPct(view.quickbooks?.shLoan)} />
+                  <KpiCard label="Cost of Labour" value={fmtCurrency(v(view.quickbooks?.costOfLabour))} icon={<IconRevenue />} accent="#C8A97E" trend={series(view.quickbooks?.costOfLabour)} delta={deltaPct(view.quickbooks?.costOfLabour)} />
+                  <KpiCard label="Cash Collected" value={fmtCurrency(v(view.quickbooks?.cashCollected))} icon={<IconCash />} accent="#7E9A7E" trend={series(view.quickbooks?.cashCollected)} delta={deltaPct(view.quickbooks?.cashCollected)} />
+                  <KpiCard label="Labour Cost / Hour" value={fmtCurrency(v(view.quickbooks?.labourCostPerHour))} icon={<IconAvg />} accent="#C8A97E" trend={series(view.quickbooks?.labourCostPerHour)} delta={deltaPct(view.quickbooks?.labourCostPerHour)} />
                 </div>
               </section>
 
