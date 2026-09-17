@@ -45,6 +45,7 @@ interface ViewBlock {
     cashInBank: MonthMap;
     totalCC: MonthMap;
     totalAP: MonthMap;
+    totalAR: MonthMap;
     gst: MonthMap;
     eht: MonthMap;
     shLoan: MonthMap;
@@ -199,10 +200,10 @@ export default function Dashboard() {
               {/* Receivables — invoice count is per-period; AR is a current snapshot (same across periods). */}
               <section>
                 <SectionLabel>Receivables</SectionLabel>
-                <p className="text-xs text-ink-muted -mt-3 mb-4">Invoices issued is per period · A/R = overdue invoice balances (matches Jobber&apos;s Aged Receivables), aged by due date.</p>
+                <p className="text-xs text-ink-muted -mt-3 mb-4">Invoices issued is per period · A/R = QuickBooks Accounts Receivable (1200) at period end · A/R Over 30 Days = overdue Jobber balances, aged by due date (current, not per period).</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                   <KpiCard label="Invoices Issued" value={fmtNum(v(view.invoiceCount))} icon={<IconRequests />} accent="#9A8F86" trend={series(view.invoiceCount)} delta={deltaPct(view.invoiceCount)} />
-                  <KpiCard label="Accounts Receivable" value={fmtCurrency(data?.receivables?.total ?? 0)} icon={<IconCash />} accent="#8A8F98" />
+                  <KpiCard label="Accounts Receivable" value={fmtCurrency(v(view.quickbooks?.totalAR))} icon={<IconCash />} accent="#8A8F98" trend={series(view.quickbooks?.totalAR)} delta={deltaPct(view.quickbooks?.totalAR)} />
                   <KpiCard label="A/R Over 30 Days" value={`${(data?.receivables?.over30Pct ?? 0).toFixed(1)}%`} icon={<IconRate />} accent="#BC8A78" />
                 </div>
               </section>
